@@ -14,9 +14,9 @@ type DB struct {
 	dialect internal.ISqlDialect
 }
 
-// OpenDbWithDriver creates a connection to a database, and creates
+// OpenDBWithDriver creates a connection to a database, and creates
 // compatible with the supplied driver by calling SQL dialect.
-func OpenDbWithDriver(dialect, connectionString string) (*DB, error) {
+func OpenDBWithDriver(dialect, connectionString string) (*DB, error) {
 	fmt.Printf("Connecting to `%s` database...", dialect)
 
 	var connection *sql.DB
@@ -24,7 +24,7 @@ func OpenDbWithDriver(dialect, connectionString string) (*DB, error) {
 
 	switch dialect {
 	// tODO: check
-	//case "postgres", "pgx", "sqlite3", "sqlite", "mysql", "sqlserver":
+	// case "postgres", "pgx", "sqlite3", "sqlite", "mysql", "sqlserver":
 	case internal.PostgresDialect, internal.PgxDialect:
 		connection, err = sql.Open(dialect, connectionString)
 	default:
@@ -36,7 +36,7 @@ func OpenDbWithDriver(dialect, connectionString string) (*DB, error) {
 	}
 
 	if err = connection.Ping(); err != nil {
-		return nil, fmt.Errorf("ERROR: failed connect to database: %v", err)
+		return nil, fmt.Errorf("ERROR: failed connect to database: %w", err)
 	}
 
 	sqlDialect, err := createDialect(connection, dialect)
@@ -44,26 +44,26 @@ func OpenDbWithDriver(dialect, connectionString string) (*DB, error) {
 		return nil, err
 	}
 
-	newDb := &DB{
+	newDB := &DB{
 		db:      connection,
 		dialect: sqlDialect,
 	}
 
 	fmt.Println("Connected to database!")
 
-	return newDb, nil
+	return newDB, nil
 }
 
-// EnsureDbVersion retrieves the current version for this DB (major version, patch).
+// EnsureDBVersion retrieves the current version for this DB (major version, patch).
 // Create and initialize the DB version table if it doesn't exist.
-func EnsureDbVersion(db *DB) (int64, byte, error) {
-	return EnsureDbVersionContext(context.Background(), db)
+func EnsureDBVersion(db *DB) (int64, byte, error) {
+	return EnsureDBVersionContext(context.Background(), db)
 }
 
-// EnsureDbVersionContext retrieves the current version for this DB (major version, patch) with context.
+// EnsureDBVersionContext retrieves the current version for this DB (major version, patch) with context.
 // Create and initialize the DB version table if it doesn't exist.
-func EnsureDbVersionContext(ctx context.Context, db *DB) (int64, byte, error) {
-	version, err := db.dialect.GetDbVersion(ctx)
+func EnsureDBVersionContext(ctx context.Context, db *DB) (int64, byte, error) {
+	version, err := db.dialect.GetDBVersion(ctx)
 	if err != nil {
 		return version.Version, version.Patch, db.dialect.CreateVersionTable(ctx)
 	}

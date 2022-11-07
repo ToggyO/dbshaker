@@ -14,7 +14,8 @@ type MigrationFunc func(tx *sql.Tx) error
 type Migration struct {
 	Name    string // migration file name.
 	Version int64  // version of migration.
-	Patch   int16  // patch version of migration (increments when new migrations were applied, but the greatest migration version in not changed)
+	Patch   int16  // patch version of migration (increments when new migrations were applied,
+	// but the greatest migration version in not changed)
 
 	UpFn   MigrationFunc // Up migrations function.
 	DownFn MigrationFunc // Down migrations function.
@@ -45,7 +46,7 @@ func (m *Migration) DownContext(ctx context.Context, tx *sql.Tx, dialect ISqlDia
 func (m *Migration) run(ctx context.Context, tx *sql.Tx, dialect ISqlDialect, direction bool) error {
 	ext := filepath.Ext(m.Name)
 	switch ext {
-	case SqlExt:
+	case SQLExt:
 	case GoExt:
 		var err error
 
@@ -59,7 +60,6 @@ func (m *Migration) run(ctx context.Context, tx *sql.Tx, dialect ISqlDialect, di
 				_ = tx.Rollback()
 				return ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
 			}
-
 		}
 
 		if direction {

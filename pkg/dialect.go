@@ -3,6 +3,7 @@ package dbshaker
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/ToggyO/dbshaker/internal"
 )
 

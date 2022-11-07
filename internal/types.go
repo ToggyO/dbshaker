@@ -31,7 +31,7 @@ func (mr MigrationRecords) ToMigrationsList() []*Migration {
 	return migrations
 }
 
-type DbVersion struct {
+type DBVersion struct {
 	Version int64
 	Patch   byte
 }

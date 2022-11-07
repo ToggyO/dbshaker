@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -48,7 +49,10 @@ func (p *postgresDialect) RemoveVersion(ctx context.Context, version int64) erro
 	return err
 }
 
-func (p *postgresDialect) GetMigrationsList(ctx context.Context, filter *MigrationListFilter) (MigrationRecords, error) {
+func (p *postgresDialect) GetMigrationsList(
+	ctx context.Context,
+	filter *MigrationListFilter,
+) (MigrationRecords, error) {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf(`SELECT version, patch, applied_at FROM %s OFFSET $1`, p.tableName))
 
@@ -93,20 +97,17 @@ func (p *postgresDialect) GetMigrationsList(ctx context.Context, filter *Migrati
 	return migrations, nil
 }
 
-func (p *postgresDialect) GetDbVersion(ctx context.Context) (DbVersion, error) {
+func (p *postgresDialect) GetDBVersion(ctx context.Context) (DBVersion, error) {
 	query := fmt.Sprintf(`SELECT version, patch FROM %s ORDER BY version DESC;`, p.tableName)
 	queryRunner := p.GetQueryRunner(ctx)
 
-	var version DbVersion
-	err := queryRunner.QueryRowContext(ctx, query).Scan(&version.Version, &version.Patch)
+	var version DBVersion
 
-	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
+	if err := queryRunner.QueryRowContext(ctx, query).Scan(&version.Version, &version.Patch); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return version, nil
-		default:
-			return version, err
 		}
+		return version, err
 	}
 
 	return version, nil

@@ -4,9 +4,9 @@ const (
 	ToolName          = "dbshaker"
 	ServiceTableName  = "dbshaker_version"
 	GoExt             = ".go"
-	SqlExt            = ".sql"
+	SQLExt            = ".sql"
 	GoFilesPattern    = "*.go"
-	SqlFilesPattern   = "*.sql"
+	SQLFilesPattern   = "*.sql"
 	FileNameSeparator = "_"
 
 	PostgresDialect = "postgres"

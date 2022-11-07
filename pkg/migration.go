@@ -9,7 +9,10 @@ import (
 )
 
 func AddMigration(up internal.MigrationFunc, down internal.MigrationFunc) {
-	_, filename, _, _ := runtime.Caller(1)
+	_, filename, _, ok := runtime.Caller(1)
+	if !ok {
+		panic("ERROR: error during parsing file name")
+	}
 
 	version, err := internal.IsValidFileName(filename)
 	if err != nil {
