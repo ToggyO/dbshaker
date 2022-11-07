@@ -1,0 +1,24 @@
+version: '3.5'
+
+services:
+  dbshaker-postgres-local:
+    image: postgres:12.1
+    container_name: dbshaker-postgres-local
+    restart: on-failure
+    ports:
+      - ${DB_EXTERNAL_PORT}:5432
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - dbshaker-postgres-local:/var/lib/postgresql/data
+    networks:
+      - dbshaker_test_network
+      - dbshaker_external_network
+
+volumes:
+  dbshaker-postgres-local:
+
+
+# docker-compose -f docker-compose.pg.local.yml --project-directory ../ up -d --build
