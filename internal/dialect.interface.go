@@ -12,5 +12,5 @@ type ISqlDialect interface {
 	IncrementVersionPatch(ctx context.Context, version int64) error
 	RemoveVersion(ctx context.Context, version int64) error
 	GetMigrationsList(ctx context.Context, filter *MigrationListFilter) (MigrationRecords, error)
-	GetDbVersion(ctx context.Context) (DbVersion, error)
+	GetDBVersion(ctx context.Context) (DBVersion, error)
 }

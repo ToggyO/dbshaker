@@ -5,7 +5,7 @@ import (
 	"database/sql"
 )
 
-// IQueryRunner wrapper over *sql.DB or *sql.Tx
+// IQueryRunner wrapper over *sql.DB or *sql.Tx.
 type IQueryRunner interface {
 	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
 	Prepare(query string) (*sql.Stmt, error)

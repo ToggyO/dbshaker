@@ -2,9 +2,10 @@ package dbshaker
 
 import (
 	"context"
-	"github.com/ToggyO/dbshaker/internal"
 	"path/filepath"
 	"sort"
+
+	"github.com/ToggyO/dbshaker/internal"
 )
 
 const (
@@ -47,7 +48,7 @@ func ListMigrationsContext(ctx context.Context, db *DB) (Migrations, error) {
 
 // LookupMigrations returns a slice of valid migrations in the migrations folder and migration registry,
 // sorted by version in ascending direction.
-// TODO: `embed` support in future by embed.FS
+// TODO: `embed` support in future by embed.FS.
 func lookupMigrations(directory string, targetVersion int64) (Migrations, error) {
 	key, err := filepath.Abs(directory)
 	if err != nil {
@@ -59,19 +60,14 @@ func lookupMigrations(directory string, targetVersion int64) (Migrations, error)
 		folderRegistry = make(folderGoMigrationRegistry)
 	}
 
-	var migrations Migrations
-
 	// SQL migrations
-	//sqlMigrationFiles, err := fs.Glob() for embedding `.sql` migrations
-	sqlMigrationFiles, err := filepath.Glob(filepath.Join(directory, internal.SqlFilesPattern))
+	// sqlMigrationFiles, err := fs.Glob() for embedding `.sql` migrations
+	sqlMigrationFiles, err := filepath.Glob(filepath.Join(directory, internal.SQLFilesPattern))
 	if err != nil {
 		return nil, err
 	}
 
-	// micro optimization of migrations slice allocation size
-	if len(sqlMigrationFiles) > 0 {
-		migrations = make(Migrations, 0, len(sqlMigrationFiles)+len(folderRegistry))
-	}
+	migrations := make(Migrations, 0, len(sqlMigrationFiles)+len(folderRegistry))
 
 	for _, file := range sqlMigrationFiles {
 		v, err := internal.IsValidFileName(file)
@@ -88,11 +84,6 @@ func lookupMigrations(directory string, targetVersion int64) (Migrations, error)
 			Version: v,
 			Source:  file,
 		})
-	}
-
-	// micro optimization of migrations slice allocation size
-	if cap(migrations) <= 0 {
-		migrations = make(Migrations, 0, len(folderRegistry))
 	}
 
 	// Migrations in `.go` files, registered via AddMigration

@@ -3,6 +3,7 @@ package dbshaker
 import (
 	"context"
 	"database/sql"
+
 	"github.com/ToggyO/dbshaker/internal"
 )
 
@@ -23,13 +24,13 @@ func UpTo(db *DB, directory string, targetVersion int64) error {
 
 // UpToContext migrates up to a specific version with context.
 func UpToContext(ctx context.Context, db *DB, directory string, targetVersion int64) error {
-	currentDbVersion, _, err := EnsureDbVersionContext(ctx, db)
+	currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
 	if err != nil {
 		return err
 	}
 
-	if currentDbVersion > targetVersion {
-		return internal.ErrDbAlreadyIsUpToDate(currentDbVersion)
+	if currentDBVersion > targetVersion {
+		return internal.ErrDBAlreadyIsUpToDate(currentDBVersion)
 	}
 
 	return db.dialect.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
@@ -53,20 +54,20 @@ func UpToContext(ctx context.Context, db *DB, directory string, targetVersion in
 
 		notAppliedMigrationsLen := len(notAppliedMigrations)
 		if notAppliedMigrationsLen > 0 {
-			if notAppliedMigrations[notAppliedMigrationsLen-1].Version < currentDbVersion {
-				err = db.dialect.IncrementVersionPatch(ctx, currentDbVersion)
+			if notAppliedMigrations[notAppliedMigrationsLen-1].Version < currentDBVersion {
+				err = db.dialect.IncrementVersionPatch(ctx, currentDBVersion)
 				if err != nil {
 					return err
 				}
 			}
 		}
 
-		currentDbVersion, _, err = EnsureDbVersionContext(ctx, db)
+		currentDBVersion, _, err = EnsureDBVersionContext(ctx, db)
 		if err != nil {
 			return err
 		}
 
-		logger.Println(internal.GetSuccessMigrationMessage(currentDbVersion))
+		logger.Println(internal.GetSuccessMigrationMessage(currentDBVersion))
 		return nil
 	})
 }

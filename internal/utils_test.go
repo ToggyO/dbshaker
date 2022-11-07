@@ -1,9 +1,10 @@
 package internal
 
 import (
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsValidFileName(t *testing.T) {
@@ -22,7 +23,7 @@ func TestIsValidFileName(t *testing.T) {
 	t.Run("get invalid migration id error", func(t *testing.T) {
 		_, err := IsValidFileName("-12324324_solo.go")
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrInvalidMigrationId)
+		require.ErrorIs(t, err, ErrInvalidMigrationID)
 	})
 
 	t.Run("get ParseInt error", func(t *testing.T) {

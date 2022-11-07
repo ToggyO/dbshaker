@@ -20,7 +20,10 @@ func (tm *TransactionManager) Transaction(ctx context.Context, action Transactio
 	defer func() {
 		if r := recover(); r != nil {
 			_ = tx.Rollback()
-		} else if err != nil {
+			return
+		}
+
+		if err != nil {
 			xerr := tx.Rollback()
 			if xerr != nil {
 				err = xerr

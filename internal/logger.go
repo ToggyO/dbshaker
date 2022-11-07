@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-// ILogger is standard logger interface
+// ILogger is standard logger interface.
 type ILogger interface {
 	Fatal(v ...interface{})
 	Fatalf(format string, v ...interface{})
