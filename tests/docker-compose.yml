@@ -1,0 +1,21 @@
+version: '3.5'
+
+services:
+  integration_tests:
+    container_name: dbshaker_integration_tests
+    build:
+      context: ../../
+      dockerfile: tests/integration_test.Dockerfile
+    depends_on:
+      - dbshaker-postgres-local
+    networks:
+      - dbshaker_test_network
+      - dbshaker_external_network
+
+networks:
+  dbshaker_test_network:
+    driver: bridge
+    internal: true
+
+  dbshaker_external_network:
+    driver: bridge
