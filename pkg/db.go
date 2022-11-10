@@ -17,7 +17,7 @@ type DB struct {
 // OpenDBWithDriver creates a connection to a database, and creates
 // compatible with the supplied driver by calling SQL dialect.
 func OpenDBWithDriver(dialect, connectionString string) (*DB, error) {
-	fmt.Printf("Connecting to `%s` database...", dialect)
+	logger.Printf("Connecting to `%s` database...", dialect)
 
 	var connection *sql.DB
 	var err error
@@ -49,7 +49,7 @@ func OpenDBWithDriver(dialect, connectionString string) (*DB, error) {
 		dialect: sqlDialect,
 	}
 
-	fmt.Println("Connected to database!")
+	logger.Println("Connected to database!")
 
 	return newDB, nil
 }

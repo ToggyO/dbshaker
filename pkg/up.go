@@ -24,13 +24,16 @@ func UpTo(db *DB, directory string, targetVersion int64) error {
 
 // UpToContext migrates up to a specific version with context.
 func UpToContext(ctx context.Context, db *DB, directory string, targetVersion int64) error {
+	logger.Println("starting migration up process...")
+
 	currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
 	if err != nil {
 		return err
 	}
 
 	if currentDBVersion > targetVersion {
-		return internal.ErrDBAlreadyIsUpToDate(currentDBVersion)
+		logger.Println("database is already up to date. current version: %d", currentDBVersion)
+		return nil
 	}
 
 	return db.dialect.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {

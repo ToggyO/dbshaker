@@ -12,7 +12,7 @@ type TransactionManager struct {
 }
 
 func (tm *TransactionManager) Transaction(ctx context.Context, action TransactionAction) error {
-	tx, err := tm.db.Begin()
+	tx, err := tm.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return err
 	}

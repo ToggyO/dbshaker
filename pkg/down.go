@@ -24,13 +24,16 @@ func DownTo(db *DB, directory string, targetVersion int64) error {
 
 // DownToContext rolls back migrations to a specific version with context.
 func DownToContext(ctx context.Context, db *DB, directory string, targetVersion int64) error {
+	logger.Printf("starting migration down process...")
+
 	currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
 	if err != nil {
 		return err
 	}
 
 	if currentDBVersion < targetVersion {
-		return internal.ErrDBAlreadyIsUpToDate(currentDBVersion)
+		logger.Println("database is already up to date. current version: %d", currentDBVersion)
+		return nil
 	}
 
 	return db.dialect.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
