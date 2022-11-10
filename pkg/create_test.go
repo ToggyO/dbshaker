@@ -1,14 +1,15 @@
 package dbshaker
 
 import (
-	"github.com/ToggyO/dbshaker/internal"
-	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ToggyO/dbshaker/internal"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateMigrationTemplate(t *testing.T) {
@@ -25,6 +26,7 @@ func TestCreateMigrationTemplate(t *testing.T) {
 	}
 
 	entry, err := os.ReadDir(dir)
+	require.NoError(t, err)
 	require.Len(t, entry, len(migrationNames))
 
 	sort.Slice(entry, func(i, j int) bool {

@@ -26,4 +26,8 @@ var (
 	ErrFailedToRunMigration = func(source string, migrationFunc MigrationFunc, err error) error {
 		return fmt.Errorf("ERROR %v: failed to run Go migration function %T: %w", source, migrationFunc, err)
 	}
+
+	ErrFailedToCreateMigration = func(err error) error {
+		return fmt.Errorf("[dbshaker]: failed to create migration file: %w", err)
+	}
 )
