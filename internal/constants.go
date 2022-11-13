@@ -16,10 +16,10 @@ const (
 	PgxDialect      = "pgx"
 
 	// SQL migration statement markers
-	markerMigrateUpStart   = "+dbshaker Up start"
-	markerMigrateUpEnd     = "+dbshaker Up end"
-	markerMigrateDownStart = "+dbshaker Down start"
-	markerMigrateDownEnd   = "+dbshaker Down end"
+	markerMigrateUpStart   = "+dbshaker UpStart"
+	markerMigrateUpEnd     = "+dbshaker UpEnd"
+	markerMigrateDownStart = "+dbshaker DownStart"
+	markerMigrateDownEnd   = "+dbshaker DownEnd"
 	markerStatementBegin   = "+dbshaker StatementBegin"
 	markerStatementEnd     = "+dbshaker StatementEnd"
 	markerNoTransaction    = "+dbshaker NO_TRANSACTION"

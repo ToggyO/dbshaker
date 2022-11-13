@@ -1,6 +1,7 @@
 package dbshaker
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -42,4 +43,15 @@ func AddMigration(up internal.MigrationFunc, down internal.MigrationFunc) {
 
 	folderRegistry[version] = migration
 	registry[key] = folderRegistry
+}
+
+// TODO: add comment
+func runSQLMigration(ctx context.Context, db *DB, statements []string, useTx bool) error {
+	if useTx {
+		db.dialect.Transaction()
+	}
+
+	for _, stmnt := range statements {
+		db.db.ExecContext()
+	}
 }

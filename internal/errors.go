@@ -30,4 +30,14 @@ var (
 	ErrFailedToCreateMigration = func(err error) error {
 		return fmt.Errorf("[dbshaker]: failed to create migration file: %w", err)
 	}
+
+	errMissingSQLParsingAnnotation = func(annotation string) error {
+		return fmt.Errorf("failed to parse migration: missing `-- %s` annotation", annotation)
+	}
+
+	errUnfinishedSQLQuery = func(state int, direction bool, remaining string) error {
+		return fmt.Errorf(
+			"failed to parse migration: state %q, direction: %v: unexpected unfinished SQL query: %q:"+
+				" missing semicolon", state, direction, remaining)
+	}
 )
