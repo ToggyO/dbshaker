@@ -10,8 +10,8 @@ import (
 
 // DB represent a database connection driver.
 type DB struct {
-	db      *sql.DB
-	dialect internal.ISqlDialect
+	connection *sql.DB
+	dialect    internal.ISqlDialect
 }
 
 // OpenDBWithDriver creates a connection to a database, and creates
@@ -45,8 +45,8 @@ func OpenDBWithDriver(dialect, connectionString string) (*DB, error) {
 	}
 
 	newDB := &DB{
-		db:      connection,
-		dialect: sqlDialect,
+		connection: connection,
+		dialect:    sqlDialect,
 	}
 
 	logger.Println("Connected to database!")

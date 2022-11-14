@@ -41,7 +41,13 @@ var bufferPool = sync.Pool{
 
 var emptyLineRegex = regexp.MustCompile(`^\s*$`)
 
-// TODO: add comment
+// ParseSQLMigration split a given SQL script into an individual statements
+// for a given migration direction - migrate up = true, migrate down = false.
+//
+// Base case to split statements is by semicolon.
+//
+// For more complex cases designed special annotations `StatementBegin` and `StatementEnd`,
+// that allows to ignore semicolon.
 func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx bool, err error) {
 	var markers sqlParseMarkers
 	if !direction {

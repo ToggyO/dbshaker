@@ -9,7 +9,7 @@ var (
 	ErrRecognizedMigrationType = errors.New("[dbshaker]: not a recognized migration file type")
 	ErrNoFilenameSeparator     = errors.New("[dbshaker]: no filename separator '_' found")
 	ErrInvalidMigrationID      = errors.New("[dbshaker]: migration IDs must be greater than zero")
-	ErrUnregisteredGoMigration = errors.New("[dbshaker]: go migration functions must be registered via `AddMigration`")
+	ErrUnregisteredGoMigration = errors.New("[dbshaker]: go migration functions must be registered via `RegisterGOMigration`")
 
 	ErrCouldNotParseMigration = func(source string, err error) error {
 		return fmt.Errorf("[dbshaker]: could not parse go migration file %q: %w", source, err)
@@ -23,7 +23,7 @@ var (
 		return fmt.Errorf("[dbshaker]: database is already up to date. current version: %d", version)
 	}
 
-	ErrFailedToRunMigration = func(source string, migrationFunc MigrationFunc, err error) error {
+	ErrFailedToRunMigration = func(source string, migrationFunc interface{}, err error) error {
 		return fmt.Errorf("ERROR %v: failed to run Go migration function %T: %w", source, migrationFunc, err)
 	}
 

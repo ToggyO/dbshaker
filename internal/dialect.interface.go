@@ -2,10 +2,11 @@ package internal
 
 import (
 	"context"
+	"github.com/ToggyO/dbshaker/shared"
 )
 
 type ISqlDialect interface {
-	ITransactionBuilder
+	shared.ITransactionBuilder
 
 	CreateVersionTable(ctx context.Context) error
 	InsertVersion(ctx context.Context, version int64) error

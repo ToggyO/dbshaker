@@ -15,7 +15,7 @@ const (
 )
 
 // Migrations runtime slice of Migration struct pointers.
-type Migrations []*internal.Migration
+type Migrations []*Migration
 
 func (ms Migrations) Len() int {
 	return len(ms)
@@ -79,14 +79,14 @@ func lookupMigrations(directory string, targetVersion int64) (Migrations, error)
 			continue
 		}
 
-		migrations = append(migrations, &internal.Migration{
+		migrations = append(migrations, &Migration{
 			Name:    filepath.Base(file),
 			Version: v,
 			Source:  file,
 		})
 	}
 
-	// Migrations in `.go` files, registered via AddMigration
+	// Migrations in `.go` files, registered via RegisterGOMigration
 	for _, migration := range folderRegistry {
 		if migration.Version > targetVersion {
 			continue

@@ -5,21 +5,20 @@ import "text/template"
 var GoMigrationTemplate = template.Must(template.New("dbshaker.go-migration").Parse(`package migrations
 
 import (
-    "database/sql"
-
     "github.com/ToggyO/dbshaker/pkg"
+    "github.com/ToggyO/dbshaker/shared"
 )
 
 func init() {
-	dbshaker.AddMigration(up{{.MName}}, down{{.MName}})
+	dbshaker.RegisterGOMigration(up{{.MName}}, down{{.MName}}, true)
 }
 
-func up{{.MName}}(tx *sql.Tx) error {
+func up{{.MName}}(runner shared.IQueryRunner) error {
 	// This code is executed when the migration is applied.
 	return nil
 }
 
-func down{{.MName}}(tx *sql.Tx) error {
+func down{{.MName}}(runner shared.IQueryRunner) error {
 	// This code is executed when the migration is rolled back.
 	return nil
 }
