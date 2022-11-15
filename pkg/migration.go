@@ -3,7 +3,6 @@ package dbshaker
 import (
 	"bufio"
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -80,19 +79,25 @@ func (m *Migration) run(ctx context.Context, db *DB, direction bool) error {
 		}
 
 	case internal.GoExt:
-		if m.UseTx {
-			return db.dialect.Transaction(ctx, func(context context.Context, tx *sql.Tx) error {
-				return m.runGoMigration(context, tx, db.dialect, direction)
-			})
+		if !m.UseTx {
+			// TODO:
+			//return db.dialect.Transaction(ctx, func(context context.Context, tx *sql.Tx) error {
+			//	return m.runGoMigration(context, tx, db.dialect, direction)
+			//})
+			return m.runGoMigration(ctx, db.connection, db.dialect, direction)
 		}
 
-		return m.runGoMigration(ctx, db.connection, db.dialect, direction)
+		return m.runGoMigration(ctx, nil, db.dialect, direction)
 	}
 
 	return nil
 }
 
 func (m *Migration) runGoMigration(ctx context.Context, queryRunner shared.IQueryRunner, dialect internal.ISqlDialect, direction bool) error {
+	if queryRunner == nil {
+		queryRunner = dialect.GetQueryRunner(ctx)
+	}
+
 	var err error
 
 	fn := m.UpFn
@@ -108,11 +113,11 @@ func (m *Migration) runGoMigration(ctx context.Context, queryRunner shared.IQuer
 	}
 
 	if direction {
-		if err = dialect.InsertVersion(ctx, m.Version); err != nil {
+		if err = dialect.InsertVersion(ctx, queryRunner, m.Version); err != nil {
 			return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
 		}
 	} else {
-		if err = dialect.RemoveVersion(ctx, m.Version); err != nil {
+		if err = dialect.RemoveVersion(ctx, queryRunner, m.Version); err != nil {
 			return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
 		}
 	}
@@ -129,34 +134,35 @@ func (m *Migration) runGoMigration(ctx context.Context, queryRunner shared.IQuer
 
 func (m *Migration) runSQLMigration(ctx context.Context, db *DB, statements []string, direction bool) error {
 	// TODO: add versioning
-	if m.UseTx {
-		return db.dialect.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-			for _, statement := range statements {
-				if _, err := tx.ExecContext(ctx, internal.ClearStatement(statement)); err != nil {
-					return err
-				}
+	if !m.UseTx {
+		for _, statement := range statements {
+			if _, err := db.connection.ExecContext(ctx, internal.ClearStatement(statement)); err != nil {
+				return err
 			}
+		}
 
-			// TODO: check
-			if direction {
-				if err := db.dialect.InsertVersion(ctx, m.Version); err != nil {
-					return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-				}
-			} else {
-				if err := db.dialect.RemoveVersion(ctx, m.Version); err != nil {
-					return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-				}
-			}
-
-			return nil
-		})
+		// TODO: check
+		// TODO: add db versioning
 	}
 
+	queryRunner := db.dialect.GetQueryRunner(ctx)
 	for _, statement := range statements {
-		if _, err := db.connection.ExecContext(ctx, internal.ClearStatement(statement)); err != nil {
+		if _, err := queryRunner.ExecContext(ctx, internal.ClearStatement(statement)); err != nil {
 			return err
 		}
 	}
+
+	// TODO: check
+	//if direction {
+	//	if err := db.dialect.InsertVersion(ctx, queryRunner, m.Version); err != nil {
+	//		return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
+	//	}
+	//} else {
+	//	if err := db.dialect.RemoveVersion(ctx, queryRunner, m.Version); err != nil {
+	//		return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
+	//	}
+	//}
+
 	// TODO: add db versioning
 	//m.Version
 

@@ -39,11 +39,11 @@ func ListMigrations(db *DB) (Migrations, error) {
 
 // ListMigrationsContext lists all applied migrations in database with context.
 func ListMigrationsContext(ctx context.Context, db *DB) (Migrations, error) {
-	records, err := db.dialect.GetMigrationsList(ctx, nil)
+	records, err := db.dialect.GetMigrationsList(ctx, db.dialect.GetQueryRunner(ctx), nil)
 	if err != nil {
 		return nil, err
 	}
-	return records.ToMigrationsList(), nil
+	return toMigrationsList(records), nil
 }
 
 // LookupMigrations returns a slice of valid migrations in the migrations folder and migration registry,
@@ -130,5 +130,17 @@ func lookupNotAppliedMigrations(known, found Migrations) Migrations {
 	}
 
 	sort.Sort(migrations)
+	return migrations
+}
+
+func toMigrationsList(mr internal.MigrationRecords) []*Migration {
+	migrations := make([]*Migration, 0, len(mr))
+
+	for _, migrationRecord := range mr {
+		migrations = append(migrations, &Migration{
+			Version: migrationRecord.Version,
+		})
+	}
+
 	return migrations
 }

@@ -26,31 +26,41 @@ func UpTo(db *DB, directory string, targetVersion int64) error {
 func UpToContext(ctx context.Context, db *DB, directory string, targetVersion int64) error {
 	logger.Println("starting migration up process...")
 
-	currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
-	if err != nil {
-		return err
-	}
-
-	if currentDBVersion > targetVersion {
-		logger.Println("database is already up to date. current version: %d", currentDBVersion)
-		return nil
-	}
+	//currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if currentDBVersion > targetVersion {
+	//	logger.Println("database is already up to date. current version: %d", currentDBVersion)
+	//	return nil
+	//}
 
 	return db.dialect.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
+		if err != nil {
+			return err
+		}
+
+		if currentDBVersion > targetVersion {
+			logger.Println("database is already up to date. current version: %d", currentDBVersion)
+			return nil
+		}
+
 		foundMigrations, err := lookupMigrations(directory, targetVersion)
 		if err != nil {
 			return err
 		}
 
-		dbMigrations, err := db.dialect.GetMigrationsList(ctx, nil)
+		dbMigrations, err := db.dialect.GetMigrationsList(ctx, tx, nil)
 		if err != nil {
 			return err
 		}
 
-		notAppliedMigrations := lookupNotAppliedMigrations(dbMigrations.ToMigrationsList(), foundMigrations)
+		notAppliedMigrations := lookupNotAppliedMigrations(toMigrationsList(dbMigrations), foundMigrations)
 
 		for _, migration := range notAppliedMigrations {
-			if err = migration.UpContext(ctx, tx, db.dialect); err != nil {
+			if err = migration.UpContext(ctx, db); err != nil {
 				return err
 			}
 		}
@@ -58,7 +68,7 @@ func UpToContext(ctx context.Context, db *DB, directory string, targetVersion in
 		notAppliedMigrationsLen := len(notAppliedMigrations)
 		if notAppliedMigrationsLen > 0 {
 			if notAppliedMigrations[notAppliedMigrationsLen-1].Version < currentDBVersion {
-				err = db.dialect.IncrementVersionPatch(ctx, currentDBVersion)
+				err = db.dialect.IncrementVersionPatch(ctx, tx, currentDBVersion)
 				if err != nil {
 					return err
 				}

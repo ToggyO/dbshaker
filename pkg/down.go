@@ -26,23 +26,33 @@ func DownTo(db *DB, directory string, targetVersion int64) error {
 func DownToContext(ctx context.Context, db *DB, directory string, targetVersion int64) error {
 	logger.Printf("starting migration down process...")
 
-	currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
-	if err != nil {
-		return err
-	}
-
-	if currentDBVersion < targetVersion {
-		logger.Println("database is already up to date. current version: %d", currentDBVersion)
-		return nil
-	}
+	//currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if currentDBVersion < targetVersion {
+	//	logger.Println("database is already up-to-date. current version: %d", currentDBVersion)
+	//	return nil
+	//}
 
 	return db.dialect.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
+		if err != nil {
+			return err
+		}
+
+		if currentDBVersion < targetVersion {
+			logger.Println("database is already up to date. current version: %d", currentDBVersion)
+			return nil
+		}
+
 		migrations, err := lookupMigrations(directory, maxVersion)
 		if err != nil {
 			return err
 		}
 
-		migrationsMap := make(map[int64]*internal.Migration)
+		migrationsMap := make(map[int64]*Migration)
 		for _, m := range migrations {
 			migrationsMap[m.Version] = m
 		}
@@ -69,7 +79,7 @@ func DownToContext(ctx context.Context, db *DB, directory string, targetVersion 
 				return nil
 			}
 
-			if err = currentMigration.DownContext(ctx, tx, db.dialect); err != nil {
+			if err = currentMigration.DownContext(ctx, db); err != nil {
 				return err
 			}
 		}

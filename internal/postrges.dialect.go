@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/ToggyO/dbshaker/shared"
 	"strings"
 )
 
@@ -20,39 +21,56 @@ func NewPostgresDialect(db *sql.DB, tableName string) ISqlDialect {
 	}
 }
 
-func (p *postgresDialect) CreateVersionTable(ctx context.Context) error {
-	query := fmt.Sprintf(`CREATE TABLE %s (
+func (p *postgresDialect) CreateVersionTable(ctx context.Context, queryRunner shared.IQueryRunner) error {
+	if queryRunner == nil {
+		queryRunner = p.GetQueryRunner(ctx)
+	}
+
+	query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS  %s (
 			version BIGINT NOT NULL UNIQUE,
 			patch INTEGER DEFAULT 0,
 			applied_at TIMESTAMP DEFAULT NOW()
 	);`, p.tableName)
-
-	_, err := p.GetQueryRunner(ctx).ExecContext(ctx, query)
+	_, err := queryRunner.ExecContext(ctx, query)
 	return err
 }
 
-func (p *postgresDialect) InsertVersion(ctx context.Context, version int64) error {
+func (p *postgresDialect) InsertVersion(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error {
+	if queryRunner == nil {
+		queryRunner = p.GetQueryRunner(ctx)
+	}
 	query := fmt.Sprintf(`INSERT INTO %s (version) VALUES ($1);`, p.tableName)
-	_, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, version)
+	_, err := queryRunner.ExecContext(ctx, query, version)
 	return err
 }
 
-func (p *postgresDialect) IncrementVersionPatch(ctx context.Context, version int64) error {
+func (p *postgresDialect) IncrementVersionPatch(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error {
+	if queryRunner == nil {
+		queryRunner = p.GetQueryRunner(ctx)
+	}
 	query := fmt.Sprintf(`UPDATE %s SET patch = patch + 1 WHERE version = $1`, p.tableName)
-	_, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, version)
+	_, err := queryRunner.ExecContext(ctx, query, version)
 	return err
 }
 
-func (p *postgresDialect) RemoveVersion(ctx context.Context, version int64) error {
+func (p *postgresDialect) RemoveVersion(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error {
+	if queryRunner == nil {
+		queryRunner = p.GetQueryRunner(ctx)
+	}
 	query := fmt.Sprintf(`DELETE FROM %s WHERE version = $1;`, p.tableName)
-	_, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, version)
+	_, err := queryRunner.ExecContext(ctx, query, version)
 	return err
 }
 
 func (p *postgresDialect) GetMigrationsList(
 	ctx context.Context,
+	queryRunner shared.IQueryRunner,
 	filter *MigrationListFilter,
 ) (MigrationRecords, error) {
+	if queryRunner == nil {
+		queryRunner = p.GetQueryRunner(ctx)
+	}
+
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf(`SELECT version, patch, applied_at FROM %s OFFSET $1`, p.tableName))
 
@@ -72,7 +90,7 @@ func (p *postgresDialect) GetMigrationsList(
 
 	sb.WriteString(";")
 	k := sb.String()
-	rows, err := p.GetQueryRunner(ctx).QueryContext(ctx, k, params...)
+	rows, err := queryRunner.QueryContext(ctx, k, params...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query migrations: %w", err)
 	}
@@ -97,9 +115,11 @@ func (p *postgresDialect) GetMigrationsList(
 	return migrations, nil
 }
 
-func (p *postgresDialect) GetDBVersion(ctx context.Context) (DBVersion, error) {
+func (p *postgresDialect) GetDBVersion(ctx context.Context, queryRunner shared.IQueryRunner) (DBVersion, error) {
 	query := fmt.Sprintf(`SELECT version, patch FROM %s ORDER BY version DESC;`, p.tableName)
-	queryRunner := p.GetQueryRunner(ctx)
+	if queryRunner == nil {
+		queryRunner = p.GetQueryRunner(ctx)
+	}
 
 	var version DBVersion
 

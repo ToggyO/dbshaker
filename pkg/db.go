@@ -63,10 +63,21 @@ func EnsureDBVersion(db *DB) (int64, byte, error) {
 // EnsureDBVersionContext retrieves the current version for this DB (major version, patch) with context.
 // Create and initialize the DB version table if it doesn't exist.
 func EnsureDBVersionContext(ctx context.Context, db *DB) (int64, byte, error) {
-	version, err := db.dialect.GetDBVersion(ctx)
+	queryRunner := db.dialect.GetQueryRunner(ctx)
+	err := db.dialect.CreateVersionTable(ctx, queryRunner)
 	if err != nil {
-		return version.Version, version.Patch, db.dialect.CreateVersionTable(ctx)
+		return 0, 0, err
 	}
 
+	version, err := db.dialect.GetDBVersion(ctx, queryRunner)
 	return version.Version, version.Patch, nil
+
+	// TODO: remove
+	//queryRunner := db.dialect.GetQueryRunner(ctx)
+	//version, err := db.dialect.GetDBVersion(ctx, queryRunner)
+	//if err != nil {
+	//	return version.Version, version.Patch, db.dialect.CreateVersionTable(ctx, queryRunner)
+	//}
+	//
+	//return version.Version, version.Patch, nil
 }

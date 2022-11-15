@@ -8,10 +8,10 @@ import (
 type ISqlDialect interface {
 	shared.ITransactionBuilder
 
-	CreateVersionTable(ctx context.Context) error
-	InsertVersion(ctx context.Context, version int64) error
-	IncrementVersionPatch(ctx context.Context, version int64) error
-	RemoveVersion(ctx context.Context, version int64) error
-	GetMigrationsList(ctx context.Context, filter *MigrationListFilter) (MigrationRecords, error)
-	GetDBVersion(ctx context.Context) (DBVersion, error)
+	CreateVersionTable(ctx context.Context, queryRunner shared.IQueryRunner) error
+	InsertVersion(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error
+	IncrementVersionPatch(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error
+	RemoveVersion(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error
+	GetMigrationsList(ctx context.Context, queryRunner shared.IQueryRunner, filter *MigrationListFilter) (MigrationRecords, error)
+	GetDBVersion(ctx context.Context, queryRunner shared.IQueryRunner) (DBVersion, error)
 }
