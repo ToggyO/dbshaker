@@ -2,15 +2,14 @@ package dbshaker
 
 import (
 	"fmt"
-	"github.com/ToggyO/dbshaker/internal"
 	"path/filepath"
 	"runtime"
+
+	"github.com/ToggyO/dbshaker/internal"
 )
 
-type folderGoMigrationRegistry map[int64]*Migration
-
-// registry stores registered go migrations by key - path to migration folder.
-var registry = make(map[string]folderGoMigrationRegistry)
+// registry stores registered go migrations.
+var registry = make(map[int64]*Migration)
 
 // TODO: add comment
 func RegisterGOMigration(up MigrationFunc, down MigrationFunc, useTx bool) {
@@ -24,28 +23,24 @@ func RegisterGOMigration(up MigrationFunc, down MigrationFunc, useTx bool) {
 		panic(err)
 	}
 
-	key := filepath.Dir(filename)
+	sourceDir, err := filepath.Abs(filepath.Dir(filename))
 	if err != nil {
 		panic(err)
 	}
 
-	folderRegistry, ok := registry[key]
-	if !ok {
-		folderRegistry = make(folderGoMigrationRegistry)
-	}
-
 	migration := &Migration{
-		Name:    filename,
-		Version: version,
-		UpFn:    up,
-		DownFn:  down,
-		UseTx:   useTx,
+		Name:      filepath.Base(filename),
+		Version:   version,
+		UpFn:      up,
+		DownFn:    down,
+		UseTx:     useTx,
+		Source:    filename,
+		SourceDir: sourceDir,
 	}
 
-	if exists, ok := folderRegistry[version]; ok {
+	if exists, ok := registry[version]; ok {
 		logger.Fatal(fmt.Sprintf("failed to add migration %q: conflicts with exitsting %q", filename, exists.Name))
 	}
 
-	folderRegistry[version] = migration
-	registry[key] = folderRegistry
+	registry[version] = migration
 }

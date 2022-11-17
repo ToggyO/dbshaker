@@ -6,7 +6,7 @@ import (
 )
 
 type ISqlDialect interface {
-	shared.ITransactionBuilder
+	ITransactionBuilder
 
 	CreateVersionTable(ctx context.Context, queryRunner shared.IQueryRunner) error
 	InsertVersion(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error

@@ -25,8 +25,9 @@ type Migration struct {
 	UpFn   MigrationFunc // Up migrations function.
 	DownFn MigrationFunc // Down migrations function.
 
-	Source string // path to migration file.
-	UseTx  bool   // TODO: check
+	Source    string // path to migration file.
+	SourceDir string // path ti migration directory
+	UseTx     bool   // indicate whether to run migration in transaction or not.
 }
 
 // Up executes an up migration.
@@ -50,7 +51,7 @@ func (m *Migration) DownContext(ctx context.Context, db *DB) error {
 }
 
 func (m *Migration) run(ctx context.Context, db *DB, direction bool) error {
-	ext := filepath.Ext(m.Name)
+	ext := filepath.Ext(m.Source)
 	switch ext {
 	case internal.SQLExt:
 		file, err := os.Open(m.Source)

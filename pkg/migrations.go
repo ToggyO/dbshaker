@@ -50,24 +50,12 @@ func ListMigrationsContext(ctx context.Context, db *DB) (Migrations, error) {
 // sorted by version in ascending direction.
 // TODO: `embed` support in future by embed.FS.
 func lookupMigrations(directory string, targetVersion int64) (Migrations, error) {
-	key, err := filepath.Abs(directory)
-	if err != nil {
-		return nil, err
-	}
-
-	folderRegistry, ok := registry[key]
-	if !ok {
-		folderRegistry = make(folderGoMigrationRegistry)
-	}
-
-	// SQL migrations
-	// sqlMigrationFiles, err := fs.Glob() for embedding `.sql` migrations
 	sqlMigrationFiles, err := filepath.Glob(filepath.Join(directory, internal.SQLFilesPattern))
 	if err != nil {
 		return nil, err
 	}
 
-	migrations := make(Migrations, 0, len(sqlMigrationFiles)+len(folderRegistry))
+	migrations := make(Migrations, 0, len(sqlMigrationFiles)+len(registry))
 
 	for _, file := range sqlMigrationFiles {
 		v, err := internal.IsValidFileName(file)
@@ -80,14 +68,23 @@ func lookupMigrations(directory string, targetVersion int64) (Migrations, error)
 		}
 
 		migrations = append(migrations, &Migration{
-			Name:    filepath.Base(file),
-			Version: v,
-			Source:  file,
+			Name:      filepath.Base(file),
+			Version:   v,
+			Source:    file,
+			SourceDir: filepath.Dir(file),
 		})
 	}
 
+	migrationRootDir, err := filepath.Abs(directory)
+	if err != nil {
+		return nil, err
+	}
+
 	// Migrations in `.go` files, registered via RegisterGOMigration
-	for _, migration := range folderRegistry {
+	for _, migration := range registry {
+		if migration.SourceDir != migrationRootDir {
+			continue
+		}
 		if migration.Version > targetVersion {
 			continue
 		}
@@ -106,7 +103,7 @@ func lookupMigrations(directory string, targetVersion int64) (Migrations, error)
 			continue // Пропускаем файлы, которые не имею версионного префикса
 		}
 
-		if _, ok := folderRegistry[v]; !ok {
+		if _, ok := registry[v]; !ok {
 			return nil, internal.ErrUnregisteredGoMigration
 		}
 	}
@@ -131,6 +128,10 @@ func lookupNotAppliedMigrations(known, found Migrations) Migrations {
 
 	sort.Sort(migrations)
 	return migrations
+}
+
+func checkNotAppliedMigrationOnValidVersion(currentDbVersion int64, notAppliedMigrations Migrations) error {
+
 }
 
 func toMigrationsList(mr internal.MigrationRecords) []*Migration {
