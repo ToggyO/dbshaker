@@ -56,28 +56,23 @@ func OpenDBWithDriver(dialect, connectionString string) (*DB, error) {
 
 // EnsureDBVersion retrieves the current version for this DB (major version, patch).
 // Create and initialize the DB version table if it doesn't exist.
-func EnsureDBVersion(db *DB) (int64, byte, error) {
+func EnsureDBVersion(db *DB) (int64, error) {
 	return EnsureDBVersionContext(context.Background(), db)
 }
 
 // EnsureDBVersionContext retrieves the current version for this DB (major version, patch) with context.
 // Create and initialize the DB version table if it doesn't exist.
-func EnsureDBVersionContext(ctx context.Context, db *DB) (int64, byte, error) {
+func EnsureDBVersionContext(ctx context.Context, db *DB) (int64, error) {
 	queryRunner := db.dialect.GetQueryRunner(ctx)
 	err := db.dialect.CreateVersionTable(ctx, queryRunner)
 	if err != nil {
-		return 0, 0, err
+		return 0, err
 	}
 
 	version, err := db.dialect.GetDBVersion(ctx, queryRunner)
-	return version.Version, version.Patch, nil
+	return version, nil
+}
 
-	// TODO: remove
-	//queryRunner := db.dialect.GetQueryRunner(ctx)
-	//version, err := db.dialect.GetDBVersion(ctx, queryRunner)
-	//if err != nil {
-	//	return version.Version, version.Patch, db.dialect.CreateVersionTable(ctx, queryRunner)
-	//}
-	//
-	//return version.Version, version.Patch, nil
+func ensureVersionTableExists(ctx context.Context, db *DB) error {
+	return db.dialect.CreateVersionTable(ctx, db.dialect.GetQueryRunner(ctx))
 }

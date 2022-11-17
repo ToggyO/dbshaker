@@ -46,10 +46,11 @@ func ListMigrationsContext(ctx context.Context, db *DB) (Migrations, error) {
 	return toMigrationsList(records), nil
 }
 
-// LookupMigrations returns a slice of valid migrations in the migrations folder and migration registry,
-// sorted by version in ascending direction.
+// scanMigrations returns a slice of valid migrations in the migrations folder and migration registry,
+// acceptable for current direction and target version.
+// Returned slice of migrations is sorted by version in ascending direction.
 // TODO: `embed` support in future by embed.FS.
-func lookupMigrations(directory string, targetVersion int64) (Migrations, error) {
+func scanMigrations(directory string, targetVersion int64, direction bool) (Migrations, error) {
 	sqlMigrationFiles, err := filepath.Glob(filepath.Join(directory, internal.SQLFilesPattern))
 	if err != nil {
 		return nil, err
@@ -63,7 +64,7 @@ func lookupMigrations(directory string, targetVersion int64) (Migrations, error)
 			return nil, internal.ErrCouldNotParseMigration(file, err)
 		}
 
-		if v > targetVersion {
+		if !checkVersion(v, targetVersion, direction) {
 			continue
 		}
 
@@ -85,7 +86,8 @@ func lookupMigrations(directory string, targetVersion int64) (Migrations, error)
 		if migration.SourceDir != migrationRootDir {
 			continue
 		}
-		if migration.Version > targetVersion {
+
+		if !checkVersion(migration.Version, targetVersion, direction) {
 			continue
 		}
 		migrations = append(migrations, migration)
@@ -114,6 +116,14 @@ func lookupMigrations(directory string, targetVersion int64) (Migrations, error)
 }
 
 func lookupNotAppliedMigrations(known, found Migrations) Migrations {
+	return filterMigrationsByDirection(known, found, true)
+}
+
+func lookupAppliedMigrations(known, found Migrations) Migrations {
+	return filterMigrationsByDirection(known, found, false)
+}
+
+func filterMigrationsByDirection(known, found Migrations, direction bool) Migrations {
 	existing := make(map[int64]bool)
 	for _, k := range known {
 		existing[k.Version] = true
@@ -121,17 +131,17 @@ func lookupNotAppliedMigrations(known, found Migrations) Migrations {
 
 	var migrations Migrations
 	for _, f := range found {
-		if _, ok := existing[f.Version]; !ok {
+		_, ok := existing[f.Version]
+		if direction && !ok {
+			migrations = append(migrations, f)
+		} else if ok {
 			migrations = append(migrations, f)
 		}
 	}
 
-	sort.Sort(migrations)
+	// TODO: remove
+	//sort.Sort(migrations)
 	return migrations
-}
-
-func checkNotAppliedMigrationOnValidVersion(currentDbVersion int64, notAppliedMigrations Migrations) error {
-
 }
 
 func toMigrationsList(mr internal.MigrationRecords) []*Migration {
@@ -144,4 +154,11 @@ func toMigrationsList(mr internal.MigrationRecords) []*Migration {
 	}
 
 	return migrations
+}
+
+func checkVersion(version, targetVersion int64, direction bool) bool {
+	if direction {
+		return version < targetVersion
+	}
+	return version > targetVersion
 }

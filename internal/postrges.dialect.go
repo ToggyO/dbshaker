@@ -28,28 +28,32 @@ func (p *postgresDialect) CreateVersionTable(ctx context.Context, queryRunner sh
 
 	query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS  %s (
 			version BIGINT NOT NULL UNIQUE,
-			patch INTEGER DEFAULT 0,
-			applied_at TIMESTAMP DEFAULT NOW()
+			applied_at TIMESTAMP DEFAULT NOW(),
+    		description VARCHAR(300)
 	);`, p.tableName)
 	_, err := queryRunner.ExecContext(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	query = fmt.Sprintf(`CREATE UNIQUE INDEX IF NOT EXISTS %s ON %s USING btree ("version");`,
+		VersionDBIndexName, p.tableName)
+	_, err = queryRunner.ExecContext(ctx, query)
+
 	return err
 }
 
-func (p *postgresDialect) InsertVersion(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error {
+func (p *postgresDialect) InsertVersion(
+	ctx context.Context,
+	queryRunner shared.IQueryRunner,
+	version int64,
+	description string,
+) error {
 	if queryRunner == nil {
 		queryRunner = p.GetQueryRunner(ctx)
 	}
-	query := fmt.Sprintf(`INSERT INTO %s (version) VALUES ($1);`, p.tableName)
-	_, err := queryRunner.ExecContext(ctx, query, version)
-	return err
-}
-
-func (p *postgresDialect) IncrementVersionPatch(ctx context.Context, queryRunner shared.IQueryRunner, version int64) error {
-	if queryRunner == nil {
-		queryRunner = p.GetQueryRunner(ctx)
-	}
-	query := fmt.Sprintf(`UPDATE %s SET patch = patch + 1 WHERE version = $1`, p.tableName)
-	_, err := queryRunner.ExecContext(ctx, query, version)
+	query := fmt.Sprintf(`INSERT INTO %s (version, description) VALUES ($1,$2);`, p.tableName)
+	_, err := queryRunner.ExecContext(ctx, query, version, description)
 	return err
 }
 
@@ -72,7 +76,7 @@ func (p *postgresDialect) GetMigrationsList(
 	}
 
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf(`SELECT version, patch, applied_at FROM %s OFFSET $1`, p.tableName))
+	sb.WriteString(fmt.Sprintf(`SELECT version, applied_at, description FROM %s OFFSET $1`, p.tableName))
 
 	var params []any
 	if filter == nil {
@@ -101,7 +105,7 @@ func (p *postgresDialect) GetMigrationsList(
 	for rows.Next() {
 		var model MigrationRecord
 
-		if err := rows.Scan(&model.Version, &model.Patch, &model.AppliedAt); err != nil {
+		if err := rows.Scan(&model.Version, &model.AppliedAt, &model.Description); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
@@ -115,15 +119,16 @@ func (p *postgresDialect) GetMigrationsList(
 	return migrations, nil
 }
 
-func (p *postgresDialect) GetDBVersion(ctx context.Context, queryRunner shared.IQueryRunner) (DBVersion, error) {
-	query := fmt.Sprintf(`SELECT version, patch FROM %s ORDER BY version DESC;`, p.tableName)
+// TODO: check (mb obsolete)
+func (p *postgresDialect) GetDBVersion(ctx context.Context, queryRunner shared.IQueryRunner) (int64, error) {
+	query := fmt.Sprintf(`SELECT version FROM %s ORDER BY version DESC;`, p.tableName)
 	if queryRunner == nil {
 		queryRunner = p.GetQueryRunner(ctx)
 	}
 
-	var version DBVersion
+	var version int64
 
-	if err := queryRunner.QueryRowContext(ctx, query).Scan(&version.Version, &version.Patch); err != nil {
+	if err := queryRunner.QueryRowContext(ctx, query).Scan(&version); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return version, nil
 		}

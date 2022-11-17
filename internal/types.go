@@ -12,14 +12,9 @@ type MigrationListFilter struct {
 }
 
 type MigrationRecord struct {
-	Version   int64     `db:"version"`
-	Patch     byte      `db:"patch"`
-	AppliedAt time.Time `db:"applied_at"`
+	Version     int64     `db:"version"`
+	AppliedAt   time.Time `db:"applied_at"`
+	Description string    `db:"description"`
 }
 
 type MigrationRecords []MigrationRecord
-
-type DBVersion struct {
-	Version int64
-	Patch   byte
-}

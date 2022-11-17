@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/ToggyO/dbshaker/shared"
 )
@@ -19,7 +20,7 @@ func (tm *TransactionManager) Transaction(
 	action TransactionAction,
 ) error {
 	if options == nil {
-		options = &TxBuilderOptions{RetryCount: 1}
+		options = &TxBuilderOptions{RetryCount: 1, TimeoutBetweenRetries: time.Millisecond}
 	}
 
 	var tx *sql.Tx
@@ -33,9 +34,11 @@ func (tm *TransactionManager) Transaction(
 		ctx = context.WithValue(ctx, transactionKey, tx)
 
 		err = action(ctx, tx)
+		// TODO: добавить проверку на занятость транзакцией
 		if err == nil {
 			break
 		}
+		time.Sleep(options.TimeoutBetweenRetries)
 	}
 
 	defer func() {

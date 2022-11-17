@@ -15,6 +15,8 @@ const (
 	PostgresDialect = "postgres"
 	PgxDialect      = "pgx"
 
+	VersionDBIndexName = "DBSH_Version_unique_clustered"
+
 	// SQL migration statement markers
 	markerMigrateUpStart   = "+dbshaker UpStart"
 	markerMigrateUpEnd     = "+dbshaker UpEnd"

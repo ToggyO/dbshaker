@@ -114,7 +114,7 @@ func (m *Migration) runGoMigration(ctx context.Context, queryRunner shared.IQuer
 	}
 
 	if direction {
-		if err = dialect.InsertVersion(ctx, queryRunner, m.Version); err != nil {
+		if err = dialect.InsertVersion(ctx, queryRunner, m.Version, m.Name); err != nil {
 			return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
 		}
 	} else {
