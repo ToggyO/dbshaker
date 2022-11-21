@@ -1,4 +1,4 @@
-package internal
+package templates
 
 import "text/template"
 

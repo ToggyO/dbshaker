@@ -1,20 +1,26 @@
-package internal
+package db
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/ToggyO/dbshaker/shared"
+	"reflect"
 	"strings"
+	"sync/atomic"
+
+	"github.com/ToggyO/dbshaker/internal"
+	"github.com/ToggyO/dbshaker/shared"
 )
 
 type postgresDialect struct {
 	TransactionManager
+
 	tableName string
+	isLocker  atomic.Bool
 }
 
-func NewPostgresDialect(db *sql.DB, tableName string) ISqlDialect {
+func NewPostgresDialect(db *sql.DB, tableName string) internal.ISqlDialect {
 	return &postgresDialect{
 		TransactionManager: TransactionManager{db: db},
 		tableName:          tableName,
@@ -37,7 +43,7 @@ func (p *postgresDialect) CreateVersionTable(ctx context.Context, queryRunner sh
 	}
 
 	query = fmt.Sprintf(`CREATE UNIQUE INDEX IF NOT EXISTS %s ON %s USING btree ("version");`,
-		VersionDBIndexName, p.tableName)
+		internal.VersionDBIndexName, p.tableName)
 	_, err = queryRunner.ExecContext(ctx, query)
 
 	return err
@@ -69,8 +75,8 @@ func (p *postgresDialect) RemoveVersion(ctx context.Context, queryRunner shared.
 func (p *postgresDialect) GetMigrationsList(
 	ctx context.Context,
 	queryRunner shared.IQueryRunner,
-	filter *MigrationListFilter,
-) (MigrationRecords, error) {
+	filter *internal.MigrationListFilter,
+) (internal.MigrationRecords, error) {
 	if queryRunner == nil {
 		queryRunner = p.GetQueryRunner(ctx)
 	}
@@ -80,7 +86,7 @@ func (p *postgresDialect) GetMigrationsList(
 
 	var params []any
 	if filter == nil {
-		filter = &MigrationListFilter{}
+		filter = &internal.MigrationListFilter{}
 	}
 
 	if filter.Offset >= 0 {
@@ -100,10 +106,10 @@ func (p *postgresDialect) GetMigrationsList(
 	}
 
 	defer rows.Close()
-	migrations := make(MigrationRecords, 0)
+	migrations := make(internal.MigrationRecords, 0)
 
 	for rows.Next() {
-		var model MigrationRecord
+		var model internal.MigrationRecord
 
 		if err := rows.Scan(&model.Version, &model.AppliedAt, &model.Description); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
@@ -136,4 +142,30 @@ func (p *postgresDialect) GetDBVersion(ctx context.Context, queryRunner shared.I
 	}
 
 	return version, nil
+}
+
+func (p *postgresDialect) Lock(ctx context.Context) error {
+	// TODO: аргументы для генерации слабоваты.
+	// TODO: P.S. рефлексию убрать
+	lockID := internal.GenerateLockId(p.tableName, reflect.TypeOf(p).Name())
+
+	query := `SELECT pg_advisory_lock($1)`
+	if _, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, lockID); err != nil {
+		return internal.ErrTryLockFailed(err)
+	}
+
+	return nil
+}
+
+func (p *postgresDialect) Unlock(ctx context.Context) error {
+	// TODO: аргументы для генерации слабоваты.
+	// TODO: P.S. рефлексию убрать
+	lockID := internal.GenerateLockId(p.tableName, reflect.TypeOf(p).Name())
+
+	query := `SELECT pg_advisory_unlock($1)`
+	if _, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, lockID); err != nil {
+		return internal.ErrTryUnlockFailed(err)
+	}
+
+	return nil
 }

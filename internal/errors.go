@@ -10,6 +10,16 @@ var (
 	ErrNoFilenameSeparator     = errors.New("[dbshaker]: no filename separator '_' found")
 	ErrInvalidMigrationID      = errors.New("[dbshaker]: migration IDs must be greater than zero")
 	ErrUnregisteredGoMigration = errors.New("[dbshaker]: go migration functions must be registered via `RegisterGOMigration`")
+	ErrLockedAcquired          = errors.New("[dbshaker]: can't acquire lock")
+	ErrLockedNotAcquired       = errors.New("[dbshaker]: can't unlock, as not currently locked")
+
+	ErrTryLockFailed = func(err error) error {
+		return fmt.Errorf("[dbshaker]: try lock failed: %w", err)
+	}
+
+	ErrTryUnlockFailed = func(err error) error {
+		return fmt.Errorf("[dbshaker]: try unlock failed: %w", err)
+	}
 
 	ErrCouldNotParseMigration = func(source string, err error) error {
 		return fmt.Errorf("[dbshaker]: could not parse go migration file %q: %w", source, err)

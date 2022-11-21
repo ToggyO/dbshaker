@@ -1,14 +1,15 @@
-package internal
+package db
 
 import (
 	"context"
 	"database/sql"
+	"github.com/ToggyO/dbshaker/internal"
 	"time"
 
 	"github.com/ToggyO/dbshaker/shared"
 )
 
-const transactionKey TransactionKey = "t_x_transaction"
+const transactionKey internal.TransactionKey = "t_x_transaction"
 
 type TransactionManager struct {
 	db *sql.DB
@@ -16,11 +17,11 @@ type TransactionManager struct {
 
 func (tm *TransactionManager) Transaction(
 	ctx context.Context,
-	options *TxBuilderOptions,
-	action TransactionAction,
+	options *internal.TxBuilderOptions,
+	action internal.TransactionAction,
 ) error {
 	if options == nil {
-		options = &TxBuilderOptions{RetryCount: 1, TimeoutBetweenRetries: time.Millisecond}
+		options = &internal.TxBuilderOptions{RetryCount: 1, TimeoutBetweenRetries: time.Millisecond}
 	}
 
 	var tx *sql.Tx

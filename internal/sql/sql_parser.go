@@ -1,9 +1,10 @@
-package internal
+package sql
 
 import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/ToggyO/dbshaker/internal"
 	"io"
 	"regexp"
 	"strings"
@@ -71,8 +72,8 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if strings.HasPrefix(line, SQLCommentPrefix) {
-			marker := strings.TrimSpace(strings.TrimPrefix(line, SQLCommentPrefix))
+		if strings.HasPrefix(line, internal.SQLCommentPrefix) {
+			marker := strings.TrimSpace(strings.TrimPrefix(line, internal.SQLCommentPrefix))
 
 			switch marker {
 			case markers.parseStartMarker:
@@ -93,11 +94,11 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 					// TODO: check
 					//state.Set(endParse)
 					if bufferRemaining := strings.TrimSpace(statementBuffer.String()); len(bufferRemaining) > 0 {
-						return nil, false, errUnfinishedSQLQuery(int(state), direction, bufferRemaining)
+						return nil, false, internal.errUnfinishedSQLQuery(int(state), direction, bufferRemaining)
 					}
 					return
 				case statementBegin:
-					return nil, false, errMissingSQLParsingAnnotation(markers.statementEnd)
+					return nil, false, internal.errMissingSQLParsingAnnotation(markers.statementEnd)
 				default:
 					return nil, false, fmt.
 						Errorf("sql migration file must start from `-- %s`, state=%v", markers.parseStartMarker, state)
@@ -113,7 +114,7 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 				default:
 					return nil, false, fmt.
 						Errorf("`-- %s` must be defined after `-- %s` or `-- %s` annotation,"+
-							" state=%v", markerStatementBegin, markerMigrateUpStart, markerMigrateDownStart, state)
+							" state=%v", internal.markerStatementBegin, internal.markerMigrateUpStart, internal.markerMigrateDownStart, state)
 				}
 				continue
 
@@ -127,7 +128,7 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 					state.Set(statementEnd)
 				default:
 					return nil, false, fmt.
-						Errorf("`-- %s` must be defined after `-- %s`", markerStatementEnd, markerStatementBegin)
+						Errorf("`-- %s` must be defined after `-- %s`", internal.markerStatementEnd, internal.markerStatementBegin)
 				}
 
 			case markers.noTransactionMarker:
@@ -170,9 +171,9 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 
 	switch state.Get() {
 	case startParse:
-		return nil, false, errMissingSQLParsingAnnotation(markers.parseStartMarker)
+		return nil, false, internal.errMissingSQLParsingAnnotation(markers.parseStartMarker)
 	case onParseTarget, statementBegin, statementEnd:
-		return nil, false, errMissingSQLParsingAnnotation(markers.parseEndMarker)
+		return nil, false, internal.errMissingSQLParsingAnnotation(markers.parseEndMarker)
 	}
 
 	// TODO: check
@@ -194,11 +195,11 @@ func checkOnStatementEnds(line string) bool {
 	prevWord := ""
 	for scanner.Scan() {
 		currentWord := scanner.Text()
-		if strings.HasSuffix(currentWord, SQLCommentPrefix) {
+		if strings.HasSuffix(currentWord, internal.SQLCommentPrefix) {
 			break
 		}
 		prevWord = currentWord
 	}
 
-	return strings.HasSuffix(prevWord, SQLSemicolon)
+	return strings.HasSuffix(prevWord, internal.SQLSemicolon)
 }

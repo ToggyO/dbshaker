@@ -18,11 +18,13 @@ const (
 	VersionDBIndexName = "DBSH_Version_unique_clustered"
 
 	// SQL migration statement markers
-	markerMigrateUpStart   = "+dbshaker UpStart"
-	markerMigrateUpEnd     = "+dbshaker UpEnd"
-	markerMigrateDownStart = "+dbshaker DownStart"
-	markerMigrateDownEnd   = "+dbshaker DownEnd"
-	markerStatementBegin   = "+dbshaker StatementBegin"
-	markerStatementEnd     = "+dbshaker StatementEnd"
-	markerNoTransaction    = "+dbshaker NO_TRANSACTION"
+	MarkerMigrateUpStart   = "+dbshaker UpStart"
+	MarkerMigrateUpEnd     = "+dbshaker UpEnd"
+	MarkerMigrateDownStart = "+dbshaker DownStart"
+	MarkerMigrateDownEnd   = "+dbshaker DownEnd"
+	MarkerStatementBegin   = "+dbshaker StatementBegin"
+	MarkerStatementEnd     = "+dbshaker StatementEnd"
+	MarkerNoTransaction    = "+dbshaker NO_TRANSACTION"
+
+	dbLockIDSalt uint = 1234567890
 )

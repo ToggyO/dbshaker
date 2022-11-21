@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/ToggyO/dbshaker/internal/sql"
 	"log"
 	"os"
 	"path/filepath"
@@ -61,7 +62,7 @@ func (m *Migration) run(ctx context.Context, db *DB, direction bool) error {
 		}
 		defer file.Close()
 
-		statements, useTx, err := internal.ParseSQLMigration(bufio.NewReader(file), direction)
+		statements, useTx, err := sql.ParseSQLMigration(bufio.NewReader(file), direction)
 		if err != nil {
 			// TODO: вынести
 			return fmt.Errorf("ERROR %v: failed to parse SQL migration file: %w", filepath.Base(m.Source), err)

@@ -1,4 +1,4 @@
-package internal
+package sql
 
 import (
 	"github.com/stretchr/testify/require"

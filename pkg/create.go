@@ -2,6 +2,7 @@ package dbshaker
 
 import (
 	"fmt"
+	"github.com/ToggyO/dbshaker/internal/templates"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,7 +43,7 @@ func CreateMigrationTemplate(name, directory string, templateType MigrationTempl
 
 	migrationFuncName := strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
 	tmplData := templateData{MName: strcase.ToCamel(migrationFuncName)}
-	template := internal.GoMigrationTemplate
+	template := templates.GoMigrationTemplate
 	// TODO: add sql template
 	// if templateType == SQLTemplate {
 	//
