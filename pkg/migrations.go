@@ -134,13 +134,18 @@ func filterMigrationsByDirection(known, found Migrations, direction bool) Migrat
 		_, ok := existing[f.Version]
 		if direction && !ok {
 			migrations = append(migrations, f)
-		} else if ok {
+		} else if !direction && ok {
 			migrations = append(migrations, f)
 		}
 	}
 
-	// TODO: remove
-	//sort.Sort(migrations)
+	// Reverse migration for down direction to apply them in reversed order and avoid conflicts
+	if !direction {
+		sort.Slice(migrations, func(i, j int) bool {
+			return migrations[i].Version > migrations[j].Version
+		})
+	}
+
 	return migrations
 }
 

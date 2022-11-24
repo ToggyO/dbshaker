@@ -12,20 +12,20 @@ type sqlParseMarkers struct {
 
 func newMigrateUpParseMarkers() sqlParseMarkers {
 	return sqlParseMarkers{
-		parseStartMarker:    internal.markerMigrateUpStart,
-		statementBegin:      internal.markerStatementBegin,
-		statementEnd:        internal.markerStatementEnd,
-		parseEndMarker:      internal.markerMigrateUpEnd,
-		noTransactionMarker: internal.markerNoTransaction,
+		parseStartMarker:    internal.MarkerMigrateUpStart,
+		statementBegin:      internal.MarkerStatementBegin,
+		statementEnd:        internal.MarkerStatementEnd,
+		parseEndMarker:      internal.MarkerMigrateUpEnd,
+		noTransactionMarker: internal.MarkerNoTransaction,
 	}
 }
 
 func newMigrateDownParseMarkers() sqlParseMarkers {
 	return sqlParseMarkers{
-		parseStartMarker:    internal.markerMigrateDownStart,
-		statementBegin:      internal.markerStatementBegin,
-		statementEnd:        internal.markerStatementEnd,
-		parseEndMarker:      internal.markerMigrateDownEnd,
-		noTransactionMarker: internal.markerNoTransaction,
+		parseStartMarker:    internal.MarkerMigrateDownStart,
+		statementBegin:      internal.MarkerStatementBegin,
+		statementEnd:        internal.MarkerStatementEnd,
+		parseEndMarker:      internal.MarkerMigrateDownEnd,
+		noTransactionMarker: internal.MarkerNoTransaction,
 	}
 }

@@ -17,7 +17,7 @@ type postgresDialect struct {
 	TransactionManager
 
 	tableName string
-	isLocker  atomic.Bool
+	isLocked  atomic.Bool
 }
 
 func NewPostgresDialect(db *sql.DB, tableName string) internal.ISqlDialect {
@@ -125,7 +125,6 @@ func (p *postgresDialect) GetMigrationsList(
 	return migrations, nil
 }
 
-// TODO: check (mb obsolete)
 func (p *postgresDialect) GetDBVersion(ctx context.Context, queryRunner shared.IQueryRunner) (int64, error) {
 	query := fmt.Sprintf(`SELECT version FROM %s ORDER BY version DESC;`, p.tableName)
 	if queryRunner == nil {
@@ -145,27 +144,31 @@ func (p *postgresDialect) GetDBVersion(ctx context.Context, queryRunner shared.I
 }
 
 func (p *postgresDialect) Lock(ctx context.Context) error {
-	// TODO: аргументы для генерации слабоваты.
-	// TODO: P.S. рефлексию убрать
-	lockID := internal.GenerateLockId(p.tableName, reflect.TypeOf(p).Name())
+	return CasRestoreOnError(&p.isLocked, false, true, internal.ErrLockAcquired, func() error {
+		// TODO: аргументы для генерации слабоваты.
+		// TODO: P.S. рефлексию убрать
+		lockID := GenerateLockId(p.tableName, reflect.TypeOf(p).Name())
 
-	query := `SELECT pg_advisory_lock($1)`
-	if _, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, lockID); err != nil {
-		return internal.ErrTryLockFailed(err)
-	}
+		query := `SELECT pg_advisory_lock($1)`
+		if _, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, lockID); err != nil {
+			return internal.ErrTryLockFailed(err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (p *postgresDialect) Unlock(ctx context.Context) error {
-	// TODO: аргументы для генерации слабоваты.
-	// TODO: P.S. рефлексию убрать
-	lockID := internal.GenerateLockId(p.tableName, reflect.TypeOf(p).Name())
+	return CasRestoreOnError(&p.isLocked, true, false, internal.ErrLockNotAcquired, func() error {
+		// TODO: аргументы для генерации слабоваты.
+		// TODO: P.S. рефлексию убрать
+		lockID := GenerateLockId(p.tableName, reflect.TypeOf(p).Name())
 
-	query := `SELECT pg_advisory_unlock($1)`
-	if _, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, lockID); err != nil {
-		return internal.ErrTryUnlockFailed(err)
-	}
+		query := `SELECT pg_advisory_unlock($1)`
+		if _, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, lockID); err != nil {
+			return internal.ErrTryUnlockFailed(err)
+		}
 
-	return nil
+		return nil
+	})
 }

@@ -26,5 +26,5 @@ const (
 	MarkerStatementEnd     = "+dbshaker StatementEnd"
 	MarkerNoTransaction    = "+dbshaker NO_TRANSACTION"
 
-	dbLockIDSalt uint = 1234567890
+	DbLockIDSalt uint = 1234567890
 )

@@ -10,8 +10,9 @@ var (
 	ErrNoFilenameSeparator     = errors.New("[dbshaker]: no filename separator '_' found")
 	ErrInvalidMigrationID      = errors.New("[dbshaker]: migration IDs must be greater than zero")
 	ErrUnregisteredGoMigration = errors.New("[dbshaker]: go migration functions must be registered via `RegisterGOMigration`")
-	ErrLockedAcquired          = errors.New("[dbshaker]: can't acquire lock")
-	ErrLockedNotAcquired       = errors.New("[dbshaker]: can't unlock, as not currently locked")
+	ErrLockAcquired            = errors.New("[dbshaker]: can't acquire lock")
+	ErrLockNotAcquired         = errors.New("[dbshaker]: can't unlock, as not currently locked")
+	ErrLockTimeout             = errors.New("[dbshaker]: timeout: can't acquire database lock")
 
 	ErrTryLockFailed = func(err error) error {
 		return fmt.Errorf("[dbshaker]: try lock failed: %w", err)
@@ -33,19 +34,20 @@ var (
 		return fmt.Errorf("[dbshaker]: database is already up to date. current version: %d", version)
 	}
 
-	ErrFailedToRunMigration = func(source string, migrationFunc interface{}, err error) error {
-		return fmt.Errorf("ERROR %v: failed to run Go migration function %T: %w", source, migrationFunc, err)
+	ErrFailedToRunMigration = func(source string, migrationType string, migrationFunc interface{}, err error) error {
+		return fmt.Errorf(
+			"ERROR %v: failed to run %s migration function %T: %w", migrationType, source, migrationFunc, err)
 	}
 
 	ErrFailedToCreateMigration = func(err error) error {
 		return fmt.Errorf("[dbshaker]: failed to create migration file: %w", err)
 	}
 
-	errMissingSQLParsingAnnotation = func(annotation string) error {
+	ErrMissingSQLParsingAnnotation = func(annotation string) error {
 		return fmt.Errorf("failed to parse migration: missing `-- %s` annotation", annotation)
 	}
 
-	errUnfinishedSQLQuery = func(state int, direction bool, remaining string) error {
+	ErrUnfinishedSQLQuery = func(state int, direction bool, remaining string) error {
 		return fmt.Errorf(
 			"failed to parse migration: state %q, direction: %v: unexpected unfinished SQL query: %q:"+
 				" missing semicolon", state, direction, remaining)

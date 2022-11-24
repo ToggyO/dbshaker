@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+
 	"github.com/ToggyO/dbshaker/shared"
 )
 

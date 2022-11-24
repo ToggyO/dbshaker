@@ -44,10 +44,9 @@ func CreateMigrationTemplate(name, directory string, templateType MigrationTempl
 	migrationFuncName := strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
 	tmplData := templateData{MName: strcase.ToCamel(migrationFuncName)}
 	template := templates.GoMigrationTemplate
-	// TODO: add sql template
-	// if templateType == SQLTemplate {
-	//
-	// }
+	if templateType == SQLTemplate {
+		template = templates.SQLMigrationTemplate
+	}
 
 	if err = template.Execute(file, tmplData); err != nil {
 		return err

@@ -11,7 +11,7 @@ import (
 // registry stores registered go migrations.
 var registry = make(map[int64]*Migration)
 
-// TODO: add comment
+// RegisterGOMigration registers new `.go` migration into `go` migration registry.
 func RegisterGOMigration(up MigrationFunc, down MigrationFunc, useTx bool) {
 	_, filename, _, ok := runtime.Caller(1)
 	if !ok {

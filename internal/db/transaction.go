@@ -9,13 +9,20 @@ import (
 	"github.com/ToggyO/dbshaker/shared"
 )
 
-const transactionKey internal.TransactionKey = "t_x_transaction"
+const (
+	transactionKey internal.TransactionKey = "t_x_transaction"
+)
 
 type TransactionManager struct {
 	db *sql.DB
 }
 
-func (tm *TransactionManager) Transaction(
+func (tm *TransactionManager) Transaction(ctx context.Context, action internal.TransactionAction) error {
+	return tm.TransactionConfigurable(ctx, nil, action)
+}
+
+// TODO: доработать логику retry.
+func (tm *TransactionManager) TransactionConfigurable(
 	ctx context.Context,
 	options *internal.TxBuilderOptions,
 	action internal.TransactionAction,
@@ -39,7 +46,7 @@ func (tm *TransactionManager) Transaction(
 		if err == nil {
 			break
 		}
-		time.Sleep(options.TimeoutBetweenRetries)
+		tm.sleep(ctx, options.TimeoutBetweenRetries)
 	}
 
 	defer func() {
@@ -66,4 +73,14 @@ func (tm *TransactionManager) GetQueryRunner(ctx context.Context) shared.IQueryR
 		return txRunner
 	}
 	return tm.db
+}
+
+func (tm *TransactionManager) sleep(ctx context.Context, d time.Duration) {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+	case <-timer.C:
+	}
 }

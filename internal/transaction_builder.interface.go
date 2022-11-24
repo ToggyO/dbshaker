@@ -13,7 +13,8 @@ type TransactionAction = func(ctx context.Context, tx *sql.Tx) error
 
 // ITransactionBuilder represent an SQL transaction process runner.
 type ITransactionBuilder interface {
-	Transaction(ctx context.Context, options *TxBuilderOptions, action TransactionAction) error
+	Transaction(ctx context.Context, action TransactionAction) error
+	TransactionConfigurable(ctx context.Context, options *TxBuilderOptions, action TransactionAction) error
 	GetQueryRunner(ctx context.Context) shared.IQueryRunner
 }
 

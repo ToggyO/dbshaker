@@ -2,12 +2,10 @@ package internal
 
 import (
 	"fmt"
-	"hash/crc32"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"sync/atomic"
 )
 
 func IsValidFileName(value string) (int64, error) {
@@ -41,29 +39,4 @@ var (
 func ClearStatement(s string) string {
 	s = matchSQLComments.ReplaceAllString(s, ``)
 	return matchEmptyEOL.ReplaceAllString(s, ``)
-}
-
-func GenerateLockId(dbName string, additional ...string) string {
-	if len(additional) > 0 {
-		dbName = strings.Join(append(additional, dbName), "\x00")
-	}
-
-	sum := crc32.ChecksumIEEE([]byte(dbName))
-	sum = sum * uint32(dbLockIDSalt)
-
-	return fmt.Sprint(sum)
-}
-
-func CasRestoreOnError(lock *atomic.Bool, old, new bool, f func() error) error {
-	if !lock.CompareAndSwap(old, new) {
-		// TODO:
-		return error
-	}
-
-	if err := f(); err != nil {
-		lock.Store(old)
-		return err
-	}
-
-	return nil
 }

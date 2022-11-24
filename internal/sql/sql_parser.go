@@ -91,14 +91,12 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 				firstLineFound = true
 				switch state.Get() {
 				case onParseTarget, statementEnd:
-					// TODO: check
-					//state.Set(endParse)
 					if bufferRemaining := strings.TrimSpace(statementBuffer.String()); len(bufferRemaining) > 0 {
-						return nil, false, internal.errUnfinishedSQLQuery(int(state), direction, bufferRemaining)
+						return nil, false, internal.ErrUnfinishedSQLQuery(int(state), direction, bufferRemaining)
 					}
 					return
 				case statementBegin:
-					return nil, false, internal.errMissingSQLParsingAnnotation(markers.statementEnd)
+					return nil, false, internal.ErrMissingSQLParsingAnnotation(markers.statementEnd)
 				default:
 					return nil, false, fmt.
 						Errorf("sql migration file must start from `-- %s`, state=%v", markers.parseStartMarker, state)
@@ -114,7 +112,7 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 				default:
 					return nil, false, fmt.
 						Errorf("`-- %s` must be defined after `-- %s` or `-- %s` annotation,"+
-							" state=%v", internal.markerStatementBegin, internal.markerMigrateUpStart, internal.markerMigrateDownStart, state)
+							" state=%v", internal.MarkerStatementBegin, internal.MarkerMigrateUpStart, internal.MarkerMigrateDownStart, state)
 				}
 				continue
 
@@ -122,13 +120,12 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 				firstLineFound = true
 				switch state.Get() {
 				case startParse:
-					// TODO: check
 					continue
 				case statementBegin:
 					state.Set(statementEnd)
 				default:
 					return nil, false, fmt.
-						Errorf("`-- %s` must be defined after `-- %s`", internal.markerStatementEnd, internal.markerStatementBegin)
+						Errorf("`-- %s` must be defined after `-- %s`", internal.MarkerStatementEnd, internal.MarkerStatementBegin)
 				}
 
 			case markers.noTransactionMarker:
@@ -171,15 +168,10 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 
 	switch state.Get() {
 	case startParse:
-		return nil, false, internal.errMissingSQLParsingAnnotation(markers.parseStartMarker)
+		return nil, false, internal.ErrMissingSQLParsingAnnotation(markers.parseStartMarker)
 	case onParseTarget, statementBegin, statementEnd:
-		return nil, false, internal.errMissingSQLParsingAnnotation(markers.parseEndMarker)
+		return nil, false, internal.ErrMissingSQLParsingAnnotation(markers.parseEndMarker)
 	}
-
-	// TODO: check
-	//if bufferRemaining := strings.TrimSpace(statementBuffer.String()); len(bufferRemaining) > 0 {
-	//	return nil, false, fmt.Errorf("failed to parse migration: state %q, direction: %v: unexpected unfinished SQL query: %q: missing semicolon", state, direction, bufferRemaining)
-	//}
 
 	return
 }

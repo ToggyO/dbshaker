@@ -3,7 +3,6 @@ package dbshaker
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"github.com/ToggyO/dbshaker/internal/sql"
 	"log"
 	"os"
@@ -57,45 +56,40 @@ func (m *Migration) run(ctx context.Context, db *DB, direction bool) error {
 	case internal.SQLExt:
 		file, err := os.Open(m.Source)
 		if err != nil {
-			// TODO: check error
-			return fmt.Errorf("ERROR %v: failed to open SQL migration file: %w", filepath.Base(m.Source), err)
+			return internal.ErrFailedToRunMigration(m.Name, "SQL", m.Source, err)
 		}
 		defer file.Close()
 
 		statements, useTx, err := sql.ParseSQLMigration(bufio.NewReader(file), direction)
 		if err != nil {
-			// TODO: вынести
-			return fmt.Errorf("ERROR %v: failed to parse SQL migration file: %w", filepath.Base(m.Source), err)
+			return internal.ErrFailedToRunMigration(m.Name, "SQL", m.Source, err)
 		}
 
 		m.UseTx = useTx
 		if err := m.runSQLMigration(ctx, db, statements, direction); err != nil {
-			return fmt.Errorf("ERROR %v: failed to run SQL migration: %w", filepath.Base(m.Source), err)
+			return internal.ErrFailedToRunMigration(m.Name, "SQL", m.Source, err)
 		}
-
-		// TODO: duplicatte
-		if len(statements) > 0 {
-			log.Printf("OK   %s \n", filepath.Base(m.Source))
-		} else {
-			log.Printf("EMPTY %s \n", filepath.Base(m.Source))
-		}
-
+		break
 	case internal.GoExt:
 		if !m.UseTx {
-			// TODO:
-			//return db.dialect.Transaction(ctx, func(context context.Context, tx *sql.Tx) error {
-			//	return m.runGoMigration(context, tx, db.dialect, direction)
-			//})
 			return m.runGoMigration(ctx, db.connection, db.dialect, direction)
 		}
 
-		return m.runGoMigration(ctx, nil, db.dialect, direction)
+		if err := m.runGoMigration(ctx, nil, db.dialect, direction); err != nil {
+			return err
+		}
+		break
 	}
 
 	return nil
 }
 
-func (m *Migration) runGoMigration(ctx context.Context, queryRunner shared.IQueryRunner, dialect internal.ISqlDialect, direction bool) error {
+func (m *Migration) runGoMigration(
+	ctx context.Context,
+	queryRunner shared.IQueryRunner,
+	dialect internal.ISqlDialect,
+	direction bool,
+) error {
 	if queryRunner == nil {
 		queryRunner = dialect.GetQueryRunner(ctx)
 	}
@@ -109,118 +103,66 @@ func (m *Migration) runGoMigration(ctx context.Context, queryRunner shared.IQuer
 
 	if fn != nil {
 		if err = fn(queryRunner); err != nil {
-			//_ = tx.Rollback()
-			return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
+			return internal.ErrFailedToRunMigration(m.Name, "Go", fn, err)
 		}
 	}
 
-	if direction {
-		if err = dialect.InsertVersion(ctx, queryRunner, m.Version, m.Name); err != nil {
-			return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-		}
-	} else {
-		if err = dialect.RemoveVersion(ctx, queryRunner, m.Version); err != nil {
-			return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-		}
+	if err := m.modifyVersion(ctx, dialect, queryRunner, direction, fn, "Go"); err != nil {
+		return err
 	}
 
-	// TODO: duplicatte
-	if fn != nil {
-		log.Println("OK   ", filepath.Base(m.Name))
-	} else {
-		log.Println("EMPTY", filepath.Base(m.Name))
-	}
+	m.reportSuccess(fn != nil, m.Name)
 
 	return err
 }
 
 func (m *Migration) runSQLMigration(ctx context.Context, db *DB, statements []string, direction bool) error {
-	// TODO: add versioning
+	var runner shared.IQueryRunner
 	if !m.UseTx {
-		for _, statement := range statements {
-			if _, err := db.connection.ExecContext(ctx, internal.ClearStatement(statement)); err != nil {
-				return err
-			}
-		}
-
-		// TODO: check
-		// TODO: add db versioning
+		runner = db.connection
+	} else {
+		runner = db.dialect.GetQueryRunner(ctx)
 	}
 
-	queryRunner := db.dialect.GetQueryRunner(ctx)
 	for _, statement := range statements {
-		if _, err := queryRunner.ExecContext(ctx, internal.ClearStatement(statement)); err != nil {
+		if _, err := runner.ExecContext(ctx, internal.ClearStatement(statement)); err != nil {
 			return err
 		}
 	}
 
-	// TODO: check
-	//if direction {
-	//	if err := db.dialect.InsertVersion(ctx, queryRunner, m.Version); err != nil {
-	//		return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-	//	}
-	//} else {
-	//	if err := db.dialect.RemoveVersion(ctx, queryRunner, m.Version); err != nil {
-	//		return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-	//	}
-	//}
+	if err := m.modifyVersion(ctx, db.dialect, runner, direction, m.Source, "SQL"); err != nil {
+		return err
+	}
 
-	// TODO: add db versioning
-	//m.Version
+	m.reportSuccess(len(statements) > 0, filepath.Base(m.Source))
 
 	return nil
 }
 
-//func (m *Migration) run(ctx context.Context, tx *sql.Tx, dialect internal.ISqlDialect, direction bool) error {
-//	ext := filepath.Ext(m.Name)
-//	var err error
-//
-//	switch ext {
-//	case internal.SQLExt:
-//		file, err := os.Open(m.Source)
-//		if err != nil {
-//			// TODO: check error
-//			return fmt.Errorf("ERROR %v: failed to open SQL migration file: %w", filepath.Base(m.Source), err)
-//		}
-//		defer file.Close()
-//
-//		statements, useTx, err := internal.ParseSQLMigration(bufio.NewReader(file), direction)
-//		err = runSQLMigration(ctx, statements, useTx, m.Version, direction)
-//
-//	case internal.GoExt:
-//		fn := m.UpFn
-//		if !direction {
-//			fn = m.DownFn
-//		}
-//
-//		if fn != nil {
-//			if err = fn(tx); err != nil {
-//				_ = tx.Rollback()
-//				return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-//			}
-//		}
-//
-//		if direction {
-//			if err = dialect.InsertVersion(ctx, m.Version); err != nil {
-//				// TODO: check multiple rollback
-//				_ = tx.Rollback()
-//				return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-//			}
-//		} else {
-//			if err = dialect.RemoveVersion(ctx, m.Version); err != nil {
-//				_ = tx.Rollback()
-//				return internal.ErrFailedToRunMigration(filepath.Base(m.Name), fn, err)
-//			}
-//		}
-//
-//		if fn != nil {
-//			log.Println("OK   ", filepath.Base(m.Name))
-//		} else {
-//			log.Println("EMPTY", filepath.Base(m.Name))
-//		}
-//
-//		return nil
-//	}
-//
-//	return nil
-//}
+func (m *Migration) modifyVersion(
+	ctx context.Context,
+	dialect internal.ISqlDialect,
+	queryRunner shared.IQueryRunner,
+	direction bool,
+	source interface{},
+	migrationType string,
+) error {
+	if direction {
+		if err := dialect.InsertVersion(ctx, queryRunner, m.Version, m.Name); err != nil {
+			return internal.ErrFailedToRunMigration(m.Name, migrationType, source, err)
+		}
+	} else {
+		if err := dialect.RemoveVersion(ctx, queryRunner, m.Version); err != nil {
+			return internal.ErrFailedToRunMigration(m.Name, migrationType, source, err)
+		}
+	}
+	return nil
+}
+
+func (m *Migration) reportSuccess(condition bool, source interface{}) {
+	if condition {
+		log.Printf("OK   %s \n", source)
+	} else {
+		log.Printf("EMPTY %s \n", source)
+	}
+}
