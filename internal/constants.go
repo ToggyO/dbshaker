@@ -27,4 +27,10 @@ const (
 	MarkerNoTransaction    = "+dbshaker NO_TRANSACTION"
 
 	DbLockIDSalt uint = 1234567890
+
+	// CLI command names
+	CmdCreate  = "create"
+	CmdMigrate = "migrate"
+	CmdUp      = "up"
+	CmdUpTo    = "up-"
 )

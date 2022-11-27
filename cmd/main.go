@@ -1,5 +1,9 @@
 package main
 
+import "log"
+
 func main() {
-	// TODO: code will be here
+	if err := Execute(); err != nil {
+		log.Fatalln(err.Error())
+	}
 }

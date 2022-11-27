@@ -51,6 +51,7 @@ func ListMigrationsContext(ctx context.Context, db *DB) (Migrations, error) {
 // Returned slice of migrations is sorted by version in ascending direction.
 // TODO: `embed` support in future by embed.FS.
 func scanMigrations(directory string, targetVersion int64, direction bool) (Migrations, error) {
+	// TODO: convert directory to absolute path
 	sqlMigrationFiles, err := filepath.Glob(filepath.Join(directory, internal.SQLFilesPattern))
 	if err != nil {
 		return nil, err
