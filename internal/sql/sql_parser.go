@@ -35,7 +35,8 @@ const scanBufferSize = 4 * 1024 * 1024
 
 var bufferPool = sync.Pool{
 	New: func() interface{} {
-		return make([]byte, scanBufferSize)
+		b := make([]byte, scanBufferSize)
+		return &b
 	},
 }
 
@@ -57,7 +58,7 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 	}
 
 	var statementBuffer bytes.Buffer
-	scanBuffer := bufferPool.Get().([]byte)
+	scanBuffer := *bufferPool.Get().(*[]byte)
 	defer bufferPool.Put(&scanBuffer)
 
 	scanner := bufio.NewScanner(r)
@@ -175,7 +176,7 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 }
 
 func checkOnStatementEnds(line string) bool {
-	scannerBuffer := bufferPool.Get().([]byte)
+	scannerBuffer := *bufferPool.Get().(*[]byte)
 	defer bufferPool.Put(&scannerBuffer)
 
 	scanner := bufio.NewScanner(strings.NewReader(line))
