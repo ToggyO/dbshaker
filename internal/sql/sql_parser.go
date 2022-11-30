@@ -18,8 +18,6 @@ const (
 	onParseTarget
 	statementBegin
 	statementEnd
-	// TODO: check
-	endParse
 )
 
 type parseState parsingState

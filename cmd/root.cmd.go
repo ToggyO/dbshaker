@@ -3,12 +3,18 @@ package main
 import (
 	"github.com/ToggyO/dbshaker/internal"
 	"github.com/spf13/cobra"
+	"path"
 )
 
 const (
 	directoryCmdArg      = "dir"
 	directoryCmdArgS     = "d"
 	directoryCmdArgUsage = "Path to folder, contains migrations"
+)
+
+var (
+	defaultMigrationRoot = path.Join(".", "migrations")
+	migrationRoot        string
 )
 
 var rootCmd = cobra.Command{
@@ -21,6 +27,6 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.AddCommand(createCmd, migrateCmd)
-	createCmd.PersistentFlags().StringP(directoryCmdArg, directoryCmdArgS, "", directoryCmdArgUsage)
+	rootCmd.PersistentFlags().StringVarP(&migrationRoot, directoryCmdArg, directoryCmdArgS, defaultMigrationRoot, directoryCmdArgUsage)
+	rootCmd.AddCommand(createCmd, migrateCmd, statusCmd)
 }

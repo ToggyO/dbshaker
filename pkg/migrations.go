@@ -9,9 +9,13 @@ import (
 )
 
 const (
-	maxUint    = ^uint64(0)
-	maxVersion = int64(maxUint >> 1) // max(int64)
+	applied      = "applied"
+	appliedColor = "\033[32m"
 
+	notApplied      = "not applied"
+	notAppliedColor = "\033[33m"
+
+	resetColor = "\033[00m"
 )
 
 // Migrations runtime slice of Migration struct pointers.
@@ -44,6 +48,42 @@ func ListMigrationsContext(ctx context.Context, db *DB) (Migrations, error) {
 		return nil, err
 	}
 	return toMigrationsList(records), nil
+}
+
+// TODO: add comment
+func Status(db *DB, directory string) error {
+	knownMigrations, err := ListMigrations(db)
+	if err != nil {
+		return err
+	}
+
+	foundMigrations, err := scanMigrations(directory, internal.MaxVersion, true)
+	if err != nil {
+		return err
+	}
+
+	if len(foundMigrations) == 0 {
+		return internal.ErrNoMigrationsInDirectory(directory)
+	}
+
+	migrationsToPrint := make(map[int64]*Migration)
+	for _, m := range knownMigrations {
+		migrationsToPrint[m.Version] = m
+	}
+
+	for _, m := range foundMigrations {
+		status := notApplied
+		color := notAppliedColor
+		_, ok := migrationsToPrint[m.Version]
+		if ok {
+			status = applied
+			color = appliedColor
+		}
+
+		logger.Printf("%s - "+color+"%s"+resetColor, m.Name, status)
+	}
+
+	return nil
 }
 
 // scanMigrations returns a slice of valid migrations in the migrations folder and migration registry,
@@ -164,7 +204,7 @@ func toMigrationsList(mr internal.MigrationRecords) []*Migration {
 
 func checkVersion(version, targetVersion int64, direction bool) bool {
 	if direction {
-		return version < targetVersion
+		return version <= targetVersion
 	}
 	return version > targetVersion
 }

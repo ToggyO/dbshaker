@@ -30,8 +30,8 @@ var (
 		return fmt.Errorf("[dbshaker]: duplicate version %v detected:\n%v\n%v", version, source1, source2)
 	}
 
-	ErrDBAlreadyIsUpToDate = func(version int64) error {
-		return fmt.Errorf("[dbshaker]: database is already up to date. current version: %d", version)
+	ErrNoMigrationsInDirectory = func(dir string) error {
+		return fmt.Errorf("[dbshaker]: no migrations found in provided directory: %s", dir)
 	}
 
 	ErrFailedToRunMigration = func(source string, migrationType string, migrationFunc interface{}, err error) error {

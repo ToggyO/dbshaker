@@ -13,9 +13,9 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - dbshaker-postgres-local:/var/lib/postgresql/data
-    networks:
-      - dbshaker_test_network
-      - dbshaker_external_network
+#    networks:
+#      - dbshaker_test_network
+#      - dbshaker_external_network
 
 volumes:
   dbshaker-postgres-local:

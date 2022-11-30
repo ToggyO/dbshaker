@@ -27,7 +27,7 @@ type Migration struct {
 
 	Source    string // path to migration file.
 	SourceDir string // path ti migration directory
-	UseTx     bool   // indicate whether to run migration in transaction or not.
+	UseTx     bool   // indicates whether to run migration in transaction or not.
 }
 
 // Up executes an up migration.

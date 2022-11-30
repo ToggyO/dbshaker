@@ -16,6 +16,7 @@ const (
 	PgxDialect      = "pgx"
 
 	VersionDBIndexName = "DBSH_Version_unique_clustered"
+	MaxVersion         = int64(^uint64(0) >> 1) // max(int64)
 
 	// SQL migration statement markers
 	MarkerMigrateUpStart   = "+dbshaker UpStart"
@@ -32,5 +33,7 @@ const (
 	CmdCreate  = "create"
 	CmdMigrate = "migrate"
 	CmdUp      = "up"
-	CmdUpTo    = "up-"
+	CmdDown    = "down"
+	CmdRedo    = "redo"
+	CmdStatus  = "status"
 )

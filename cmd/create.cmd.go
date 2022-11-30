@@ -1,11 +1,12 @@
 package main
 
 import (
-	dbshaker "github.com/ToggyO/dbshaker/pkg"
-	"github.com/spf13/cobra"
 	"log"
 
+	"github.com/spf13/cobra"
+
 	"github.com/ToggyO/dbshaker/internal"
+	"github.com/ToggyO/dbshaker/pkg"
 )
 
 const (
@@ -22,11 +23,6 @@ var createCmd = &cobra.Command{
 	Use:   internal.CmdCreate,
 	Short: "creates migration template",
 	Run: func(cmd *cobra.Command, args []string) {
-		dir, err := cmd.Flags().GetString(directoryCmdArg)
-		if err != nil {
-			log.Fatalln(err.Error())
-		}
-
 		name, err := cmd.Flags().GetString(createCmdArgName)
 		if err != nil {
 			log.Fatalln(err.Error())
@@ -37,7 +33,7 @@ var createCmd = &cobra.Command{
 			log.Fatalln(err.Error())
 		}
 
-		if err = dbshaker.Run(nil, internal.CmdCreate, dir, name, migrationType); err != nil {
+		if err = dbshaker.Run(nil, internal.CmdCreate, migrationRoot, name, migrationType); err != nil {
 			log.Fatalln(err.Error())
 		}
 	},

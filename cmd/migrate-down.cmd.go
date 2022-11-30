@@ -9,16 +9,17 @@ import (
 	"github.com/ToggyO/dbshaker/pkg"
 )
 
-var migrateUpCmd = &cobra.Command{
-	Use:   internal.CmdUp,
-	Short: "run migrate up",
+var migrateDownCmd = &cobra.Command{
+	Use:   internal.CmdDown,
+	Short: "run migrate down",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		db, strVersion, err := prepareMigrateCmdParams(cmd, args)
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
-		if err = dbshaker.Run(db, internal.CmdUp, migrationRoot, strVersion); err != nil {
+
+		if err = dbshaker.Run(db, internal.CmdDown, migrationRoot, strVersion); err != nil {
 			log.Fatalln(err.Error())
 		}
 	},

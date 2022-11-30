@@ -8,12 +8,12 @@ import (
 
 // Up - migrates up to a max version.
 func Up(db *DB, directory string) error {
-	return UpTo(db, directory, maxVersion)
+	return UpTo(db, directory, internal.MaxVersion)
 }
 
 // UpContext migrates up to a max version with context.
 func UpContext(ctx context.Context, db *DB, directory string) error {
-	return UpToContext(ctx, db, directory, maxVersion)
+	return UpToContext(ctx, db, directory, internal.MaxVersion)
 }
 
 // UpTo migrates up to a specific version.
@@ -65,5 +65,4 @@ func UpToContext(ctx context.Context, db *DB, directory string, targetVersion in
 
 	logger.Println(internal.GetSuccessMigrationMessage(currentDBVersion))
 	return nil
-
 }
