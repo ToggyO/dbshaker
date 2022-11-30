@@ -1,4 +1,4 @@
-package dbshaker
+package main
 
 import (
 	"log"

@@ -1,4 +1,4 @@
-package dbshaker
+package main
 
 import (
 	"github.com/ToggyO/dbshaker/internal"

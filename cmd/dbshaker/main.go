@@ -1,12 +1,9 @@
 package main
 
-import (
-	main2 "github.com/ToggyO/dbshaker/cmd/dbshaker"
-	"log"
-)
+import "log"
 
 func main() {
-	if err := main2.Execute(); err != nil {
+	if err := Execute(); err != nil {
 		log.Fatalln(err.Error())
 	}
 }
