@@ -74,17 +74,10 @@ func EnsureDBVersionContext(ctx context.Context, db *DB) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	version, err := db.dialect.GetDBVersion(ctx, queryRunner)
-	return version, nil
+	return db.dialect.GetDBVersion(ctx, queryRunner)
 }
 
-// TODO: remove
-func ensureVersionTableExists(ctx context.Context, db *DB) error {
-	return db.dialect.CreateVersionTable(ctx, db.dialect.GetQueryRunner(ctx))
-}
-
-func lockDb(ctx context.Context, db *DB) error {
+func lockDB(ctx context.Context, db *DB) error {
 	// create done channel, used in the timeout goroutine
 	done := make(chan bool, 1)
 	defer func() {
@@ -120,8 +113,4 @@ func lockDb(ctx context.Context, db *DB) error {
 
 	// wait until we either receive ErrLockTimeout or error from Lock operation
 	return <-errChan
-}
-
-func unlockDb(ctx context.Context, db *DB) error {
-	return db.dialect.Unlock(ctx)
 }

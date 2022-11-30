@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/ToggyO/dbshaker/internal"
-	dbshaker "github.com/ToggyO/dbshaker/pkg"
+	"github.com/ToggyO/dbshaker/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -32,5 +32,4 @@ func prepareMigrateCmdParams(cmd *cobra.Command, args []string) (*dbshaker.DB, s
 
 	strVersion, _ := cmd.Flags().GetString(toVersionCmdArgName)
 	return db, strVersion, nil
-
 }

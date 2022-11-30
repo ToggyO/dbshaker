@@ -3,9 +3,9 @@ package dbshaker
 import (
 	"database/sql"
 	"fmt"
-	"github.com/ToggyO/dbshaker/internal/db"
 
 	"github.com/ToggyO/dbshaker/internal"
+	"github.com/ToggyO/dbshaker/internal/db"
 )
 
 func createDialect(connection *sql.DB, d string) (internal.ISqlDialect, error) {

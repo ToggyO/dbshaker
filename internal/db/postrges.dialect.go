@@ -147,7 +147,7 @@ func (p *postgresDialect) Lock(ctx context.Context) error {
 	return CasRestoreOnError(&p.isLocked, false, true, internal.ErrLockAcquired, func() error {
 		// TODO: аргументы для генерации слабоваты.
 		// TODO: P.S. рефлексию убрать
-		lockID := GenerateLockId(p.tableName, reflect.TypeOf(p).Name())
+		lockID := GenerateLockID(p.tableName, reflect.TypeOf(p).Name())
 
 		query := `SELECT pg_advisory_lock($1)`
 		if _, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, lockID); err != nil {
@@ -162,7 +162,7 @@ func (p *postgresDialect) Unlock(ctx context.Context) error {
 	return CasRestoreOnError(&p.isLocked, true, false, internal.ErrLockNotAcquired, func() error {
 		// TODO: аргументы для генерации слабоваты.
 		// TODO: P.S. рефлексию убрать
-		lockID := GenerateLockId(p.tableName, reflect.TypeOf(p).Name())
+		lockID := GenerateLockID(p.tableName, reflect.TypeOf(p).Name())
 
 		query := `SELECT pg_advisory_unlock($1)`
 		if _, err := p.GetQueryRunner(ctx).ExecContext(ctx, query, lockID); err != nil {

@@ -18,7 +18,7 @@ const (
 	VersionDBIndexName = "DBSH_Version_unique_clustered"
 	MaxVersion         = int64(^uint64(0) >> 1) // max(int64)
 
-	// SQL migration statement markers
+	// SQL migration statement markers.
 	MarkerMigrateUpStart   = "+dbshaker UpStart"
 	MarkerMigrateUpEnd     = "+dbshaker UpEnd"
 	MarkerMigrateDownStart = "+dbshaker DownStart"
@@ -27,9 +27,9 @@ const (
 	MarkerStatementEnd     = "+dbshaker StatementEnd"
 	MarkerNoTransaction    = "+dbshaker NO_TRANSACTION"
 
-	DbLockIDSalt uint = 1234567890
+	DBLockIDSalt uint = 1234567890
 
-	// CLI command names
+	// CLI command names.
 	CmdCreate  = "create"
 	CmdMigrate = "migrate"
 	CmdUp      = "up"

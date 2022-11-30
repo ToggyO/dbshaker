@@ -2,13 +2,13 @@ package dbshaker
 
 import (
 	"fmt"
-	"github.com/ToggyO/dbshaker/internal/templates"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/ToggyO/dbshaker/internal"
+	"github.com/ToggyO/dbshaker/internal/templates"
 	"github.com/iancoleman/strcase"
 )
 

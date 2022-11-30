@@ -3,12 +3,12 @@ package dbshaker
 import (
 	"bufio"
 	"context"
-	"github.com/ToggyO/dbshaker/internal/sql"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/ToggyO/dbshaker/internal"
+	"github.com/ToggyO/dbshaker/internal/sql"
 	"github.com/ToggyO/dbshaker/shared"
 )
 
@@ -69,7 +69,7 @@ func (m *Migration) run(ctx context.Context, db *DB, direction bool) error {
 		if err := m.runSQLMigration(ctx, db, statements, direction); err != nil {
 			return internal.ErrFailedToRunMigration(m.Name, "SQL", m.Source, err)
 		}
-		break
+
 	case internal.GoExt:
 		if !m.UseTx {
 			return m.runGoMigration(ctx, db.connection, db.dialect, direction)
@@ -78,7 +78,6 @@ func (m *Migration) run(ctx context.Context, db *DB, direction bool) error {
 		if err := m.runGoMigration(ctx, nil, db.dialect, direction); err != nil {
 			return err
 		}
-		break
 	}
 
 	return nil

@@ -27,26 +27,16 @@ func UpToContext(ctx context.Context, db *DB, directory string, targetVersion in
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err := lockDb(ctx, db); err != nil {
+	if err := lockDB(ctx, db); err != nil {
 		return err
 	}
 
-	_, err := EnsureDBVersionContext(ctx, db)
+	knownMigrations, foundMigrations, err := prepareKnownAndCollectProvidedMigrations(ctx, db, directory, targetVersion)
 	if err != nil {
 		return err
 	}
 
-	foundMigrations, err := scanMigrations(directory, targetVersion, true)
-	if err != nil {
-		return err
-	}
-
-	knownMigrations, err := db.dialect.GetMigrationsList(ctx, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	notAppliedMigrations := lookupNotAppliedMigrations(toMigrationsList(knownMigrations), foundMigrations)
+	notAppliedMigrations := lookupNotAppliedMigrations(knownMigrations, foundMigrations)
 
 	for _, migration := range notAppliedMigrations {
 		if err = migration.UpContext(ctx, db); err != nil {

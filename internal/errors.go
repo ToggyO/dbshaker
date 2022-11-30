@@ -9,10 +9,11 @@ var (
 	ErrRecognizedMigrationType = errors.New("[dbshaker]: not a recognized migration file type")
 	ErrNoFilenameSeparator     = errors.New("[dbshaker]: no filename separator '_' found")
 	ErrInvalidMigrationID      = errors.New("[dbshaker]: migration IDs must be greater than zero")
-	ErrUnregisteredGoMigration = errors.New("[dbshaker]: go migration functions must be registered via `RegisterGOMigration`")
-	ErrLockAcquired            = errors.New("[dbshaker]: can't acquire lock")
-	ErrLockNotAcquired         = errors.New("[dbshaker]: can't unlock, as not currently locked")
-	ErrLockTimeout             = errors.New("[dbshaker]: timeout: can't acquire database lock")
+	ErrUnregisteredGoMigration = errors.New(
+		"[dbshaker]: go migration functions must be registered via `RegisterGOMigration`")
+	ErrLockAcquired    = errors.New("[dbshaker]: can't acquire lock")
+	ErrLockNotAcquired = errors.New("[dbshaker]: can't unlock, as not currently locked")
+	ErrLockTimeout     = errors.New("[dbshaker]: timeout: can't acquire database lock")
 
 	ErrTryLockFailed = func(err error) error {
 		return fmt.Errorf("[dbshaker]: try lock failed: %w", err)

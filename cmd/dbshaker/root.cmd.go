@@ -1,9 +1,10 @@
 package main
 
 import (
+	"path"
+
 	"github.com/ToggyO/dbshaker/internal"
 	"github.com/spf13/cobra"
-	"path"
 )
 
 const (
@@ -27,6 +28,8 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&migrationRoot, directoryCmdArg, directoryCmdArgS, defaultMigrationRoot, directoryCmdArgUsage)
+	rootCmd.PersistentFlags().
+		StringVarP(&migrationRoot, directoryCmdArg, directoryCmdArgS, defaultMigrationRoot, directoryCmdArgUsage)
+
 	rootCmd.AddCommand(createCmd, migrateCmd, statusCmd)
 }

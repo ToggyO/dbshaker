@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/spf13/cobra"
-
 	"github.com/ToggyO/dbshaker/internal"
 	"github.com/ToggyO/dbshaker/pkg"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -41,5 +40,9 @@ var createCmd = &cobra.Command{
 
 func init() {
 	createCmd.PersistentFlags().StringP(createCmdArgName, createCmdArgNameS, "", createCmdArgNameUsage)
-	createCmd.PersistentFlags().StringP(createCmdArgType, createCmdArgTypeS, string(dbshaker.GoTemplate), createCmdArgTypeUsage)
+	createCmd.PersistentFlags().
+		StringP(createCmdArgType, createCmdArgTypeS, string(dbshaker.GoTemplate), createCmdArgTypeUsage)
+
+	_ = createCmd.MarkPersistentFlagRequired(createCmdArgName)
+	_ = createCmd.MarkPersistentFlagRequired(createCmdArgType)
 }

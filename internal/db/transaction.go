@@ -3,9 +3,9 @@ package db
 import (
 	"context"
 	"database/sql"
-	"github.com/ToggyO/dbshaker/internal"
 	"time"
 
+	"github.com/ToggyO/dbshaker/internal"
 	"github.com/ToggyO/dbshaker/shared"
 )
 

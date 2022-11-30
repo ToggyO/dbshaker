@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/spf13/cobra"
-
 	"github.com/ToggyO/dbshaker/internal"
 	"github.com/ToggyO/dbshaker/pkg"
+	"github.com/spf13/cobra"
 )
 
 var statusCmd = &cobra.Command{

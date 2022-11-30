@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/spf13/cobra"
-
 	"github.com/ToggyO/dbshaker/internal"
 	"github.com/ToggyO/dbshaker/pkg"
+	"github.com/spf13/cobra"
 )
 
 var migrateUpCmd = &cobra.Command{
@@ -18,6 +17,7 @@ var migrateUpCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
+
 		if err = dbshaker.Run(db, internal.CmdUp, migrationRoot, strVersion); err != nil {
 			log.Fatalln(err.Error())
 		}

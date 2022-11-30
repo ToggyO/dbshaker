@@ -1,9 +1,8 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
-
 	"github.com/ToggyO/dbshaker/internal"
+	"github.com/spf13/cobra"
 )
 
 var redoCmd = &cobra.Command{

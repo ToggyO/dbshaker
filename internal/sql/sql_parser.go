@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/ToggyO/dbshaker/internal"
 	"io"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/ToggyO/dbshaker/internal"
 )
 
 type parsingState int
@@ -47,7 +48,7 @@ var emptyLineRegex = regexp.MustCompile(`^\s*$`)
 //
 // For more complex cases designed special annotations `StatementBegin` and `StatementEnd`,
 // that allows to ignore semicolon.
-func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx bool, err error) {
+func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx bool, err error) { //nolint:all
 	var markers sqlParseMarkers
 	if !direction {
 		markers = newMigrateDownParseMarkers()
@@ -56,13 +57,11 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 	}
 
 	var statementBuffer bytes.Buffer
-
 	scanBuffer := bufferPool.Get().([]byte)
-	defer bufferPool.Put(scanBuffer)
+	defer bufferPool.Put(&scanBuffer)
 
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(scanBuffer, scanBufferSize)
-
 	state := parseState(startParse)
 
 	useTx = true
@@ -76,7 +75,7 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 			switch marker {
 			case markers.parseStartMarker:
 				firstLineFound = true
-				switch state.Get() {
+				switch state.Get() { //nolint:all
 				case startParse:
 					state.Set(onParseTarget)
 				default:
@@ -86,8 +85,7 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 				continue
 
 			case markers.parseEndMarker:
-				firstLineFound = true
-				switch state.Get() {
+				switch state.Get() { //nolint:all
 				case onParseTarget, statementEnd:
 					if bufferRemaining := strings.TrimSpace(statementBuffer.String()); len(bufferRemaining) > 0 {
 						return nil, false, internal.ErrUnfinishedSQLQuery(int(state), direction, bufferRemaining)
@@ -102,7 +100,7 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 
 			case markers.statementBegin:
 				firstLineFound = true
-				switch state.Get() {
+				switch state.Get() { //nolint:all
 				case startParse:
 					break
 				case onParseTarget, statementEnd:
@@ -110,13 +108,17 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 				default:
 					return nil, false, fmt.
 						Errorf("`-- %s` must be defined after `-- %s` or `-- %s` annotation,"+
-							" state=%v", internal.MarkerStatementBegin, internal.MarkerMigrateUpStart, internal.MarkerMigrateDownStart, state)
+							" state=%v",
+							internal.MarkerStatementBegin,
+							internal.MarkerMigrateUpStart,
+							internal.MarkerMigrateDownStart,
+							state)
 				}
 				continue
 
 			case markers.statementEnd:
 				firstLineFound = true
-				switch state.Get() {
+				switch state.Get() { //nolint:all
 				case startParse:
 					continue
 				case statementBegin:
@@ -131,7 +133,6 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 				continue
 
 			default:
-				// Ignore line
 				continue
 			}
 		}
@@ -140,14 +141,14 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 			continue
 		}
 
-		switch state.Get() {
+		switch state.Get() { //nolint:all
 		case onParseTarget, statementBegin:
 			if _, err = statementBuffer.WriteString(line + "\n"); err != nil {
 				return nil, false, err
 			}
 		}
 
-		switch state.Get() {
+		switch state.Get() { //nolint:all
 		case onParseTarget:
 			if checkOnStatementEnds(line) {
 				statements = append(statements, statementBuffer.String())
@@ -170,13 +171,12 @@ func ParseSQLMigration(r io.Reader, direction bool) (statements []string, useTx 
 	case onParseTarget, statementBegin, statementEnd:
 		return nil, false, internal.ErrMissingSQLParsingAnnotation(markers.parseEndMarker)
 	}
-
 	return
 }
 
 func checkOnStatementEnds(line string) bool {
 	scannerBuffer := bufferPool.Get().([]byte)
-	defer bufferPool.Put(scannerBuffer)
+	defer bufferPool.Put(&scannerBuffer)
 
 	scanner := bufio.NewScanner(strings.NewReader(line))
 	scanner.Buffer(scannerBuffer, scanBufferSize)

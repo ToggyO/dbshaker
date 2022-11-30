@@ -50,7 +50,7 @@ func ListMigrationsContext(ctx context.Context, db *DB) (Migrations, error) {
 	return toMigrationsList(records), nil
 }
 
-// TODO: add comment
+// Status log migration status for provided directory.
 func Status(db *DB, directory string) error {
 	knownMigrations, err := ListMigrations(db)
 	if err != nil {
@@ -84,6 +84,31 @@ func Status(db *DB, directory string) error {
 	}
 
 	return nil
+}
+
+func prepareKnownAndCollectProvidedMigrations(
+	ctx context.Context,
+	db *DB,
+	directory string,
+	targetVersion int64,
+) (knownMigrations Migrations, foundMigrations Migrations, err error) {
+	_, err = EnsureDBVersionContext(ctx, db)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	foundMigrations, err = scanMigrations(directory, targetVersion, true)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	knownMigrationRecords, err := db.dialect.GetMigrationsList(ctx, nil, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	knownMigrations = toMigrationsList(knownMigrationRecords)
+	return
 }
 
 // scanMigrations returns a slice of valid migrations in the migrations folder and migration registry,

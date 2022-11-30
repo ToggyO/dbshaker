@@ -2,6 +2,7 @@ package dbshaker
 
 import (
 	"context"
+
 	"github.com/ToggyO/dbshaker/internal"
 )
 
@@ -26,26 +27,15 @@ func DownToContext(ctx context.Context, db *DB, directory string, targetVersion 
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err := lockDb(ctx, db); err != nil {
+	if err := lockDB(ctx, db); err != nil {
 		return err
 	}
 
-	_, err := EnsureDBVersionContext(ctx, db)
+	knownMigrations, foundMigrations, err := prepareKnownAndCollectProvidedMigrations(ctx, db, directory, targetVersion)
 	if err != nil {
 		return err
 	}
-
-	migrations, err := scanMigrations(directory, targetVersion, false)
-	if err != nil {
-		return err
-	}
-
-	knownMigrations, err := db.dialect.GetMigrationsList(ctx, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	appliedMigrations := lookupAppliedMigrations(toMigrationsList(knownMigrations), migrations)
+	appliedMigrations := lookupAppliedMigrations(knownMigrations, foundMigrations)
 
 	for _, applied := range appliedMigrations {
 		if err = applied.DownContext(ctx, db); err != nil {
