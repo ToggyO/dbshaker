@@ -1,4 +1,4 @@
-package main
+package dbshaker
 
 import (
 	"github.com/spf13/cobra"

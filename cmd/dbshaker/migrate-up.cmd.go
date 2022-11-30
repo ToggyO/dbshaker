@@ -1,4 +1,4 @@
-package main
+package dbshaker
 
 import (
 	"log"
@@ -9,17 +9,16 @@ import (
 	"github.com/ToggyO/dbshaker/pkg"
 )
 
-var statusCmd = &cobra.Command{
-	Use:   internal.CmdStatus,
-	Short: "prints migrations status for provided directory",
+var migrateUpCmd = &cobra.Command{
+	Use:   internal.CmdUp,
+	Short: "run migrate up",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		db, _, err := prepareMigrateCmdParams(cmd, args)
+		db, strVersion, err := prepareMigrateCmdParams(cmd, args)
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
-
-		if err := dbshaker.Status(db, migrationRoot); err != nil {
+		if err = dbshaker.Run(db, internal.CmdUp, migrationRoot, strVersion); err != nil {
 			log.Fatalln(err.Error())
 		}
 	},
