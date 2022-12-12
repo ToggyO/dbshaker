@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -28,4 +29,14 @@ func IsValidFileName(value string) (int64, error) {
 
 func GetSuccessMigrationMessage(currentDBVersion int64) string {
 	return fmt.Sprintf("no migrations to run. current version: %d\n", currentDBVersion)
+}
+
+var (
+	matchSQLComments = regexp.MustCompile(`(?m)^--.*$[\r\n]*`)
+	matchEmptyEOL    = regexp.MustCompile(`(?m)^$[\r\n]*`) // TODO: Duplicate
+)
+
+func ClearStatement(s string) string {
+	s = matchSQLComments.ReplaceAllString(s, ``)
+	return matchEmptyEOL.ReplaceAllString(s, ``)
 }

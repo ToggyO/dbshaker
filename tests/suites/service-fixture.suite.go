@@ -34,7 +34,7 @@ func (sf *ServiceFixtureSuite) Init(dialect, connectionString string) {
 	}
 
 	sf.MigrationRoot = dir
-	sf.InitialMigrationVersions = []int64{11092022001, 15102022005, 31102022003}
+	sf.InitialMigrationVersions = []int64{11092022001, 15102022005, 24112022001, 31102022003}
 
 	sf.sortVersions(sf.InitialMigrationVersions)
 	sf.setupInitialMigrations()
@@ -55,13 +55,14 @@ func (sf *ServiceFixtureSuite) setupInitialMigrations() {
 }
 
 func (sf *ServiceFixtureSuite) testUpTo() {
-	target := sf.InitialMigrationVersions[1]
+	index := len(sf.InitialMigrationVersions) - 1
+	target := sf.InitialMigrationVersions[index]
 	err := dbshaker.UpTo(sf.DB, sf.MigrationRoot, target)
 	require.NoError(sf.Suite.T(), err)
 
 	migrations, err := dbshaker.ListMigrations(sf.DB)
 	require.NoError(sf.Suite.T(), err)
-	require.Len(sf.T(), migrations, 2)
+	require.Len(sf.T(), migrations, 3)
 }
 
 func (sf *ServiceFixtureSuite) testUp() {

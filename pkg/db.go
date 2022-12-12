@@ -4,20 +4,25 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/ToggyO/dbshaker/internal"
 )
 
+const defaultLockTimeout = 15 * time.Second
+
 // DB represent a database connection driver.
 type DB struct {
-	db      *sql.DB
-	dialect internal.ISqlDialect
+	connection *sql.DB
+	dialect    internal.ISqlDialect
+	mu         *sync.Mutex
 }
 
 // OpenDBWithDriver creates a connection to a database, and creates
 // compatible with the supplied driver by calling SQL dialect.
 func OpenDBWithDriver(dialect, connectionString string) (*DB, error) {
-	fmt.Printf("Connecting to `%s` database...", dialect)
+	logger.Printf("Connecting to `%s` database...", dialect)
 
 	var connection *sql.DB
 	var err error
@@ -45,28 +50,67 @@ func OpenDBWithDriver(dialect, connectionString string) (*DB, error) {
 	}
 
 	newDB := &DB{
-		db:      connection,
-		dialect: sqlDialect,
+		connection: connection,
+		dialect:    sqlDialect,
+		mu:         &sync.Mutex{},
 	}
 
-	fmt.Println("Connected to database!")
+	logger.Println("Connected to database!")
 
 	return newDB, nil
 }
 
 // EnsureDBVersion retrieves the current version for this DB (major version, patch).
 // Create and initialize the DB version table if it doesn't exist.
-func EnsureDBVersion(db *DB) (int64, byte, error) {
+func EnsureDBVersion(db *DB) (int64, error) {
 	return EnsureDBVersionContext(context.Background(), db)
 }
 
 // EnsureDBVersionContext retrieves the current version for this DB (major version, patch) with context.
 // Create and initialize the DB version table if it doesn't exist.
-func EnsureDBVersionContext(ctx context.Context, db *DB) (int64, byte, error) {
-	version, err := db.dialect.GetDBVersion(ctx)
+func EnsureDBVersionContext(ctx context.Context, db *DB) (int64, error) {
+	queryRunner := db.dialect.GetQueryRunner(ctx)
+	err := db.dialect.CreateVersionTable(ctx, queryRunner)
 	if err != nil {
-		return version.Version, version.Patch, db.dialect.CreateVersionTable(ctx)
+		return 0, err
 	}
+	return db.dialect.GetDBVersion(ctx, queryRunner)
+}
 
-	return version.Version, version.Patch, nil
+func lockDB(ctx context.Context, db *DB) error {
+	// create done channel, used in the timeout goroutine
+	done := make(chan bool, 1)
+	defer func() {
+		done <- true
+	}()
+
+	// use errChan to signal error back to this context
+	errChan := make(chan error, 2)
+
+	// TODO: настроить конфигурирование
+	timeout := time.After(defaultLockTimeout)
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-timeout:
+				errChan <- internal.ErrLockTimeout
+			}
+		}
+	}()
+
+	// now try to acquire the lock
+	go func() {
+		err := db.dialect.Lock(ctx)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		errChan <- nil
+	}()
+
+	// wait until we either receive ErrLockTimeout or error from Lock operation
+	return <-errChan
 }

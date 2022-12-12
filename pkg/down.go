@@ -2,7 +2,6 @@ package dbshaker
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/ToggyO/dbshaker/internal"
 )
@@ -24,51 +23,35 @@ func DownTo(db *DB, directory string, targetVersion int64) error {
 
 // DownToContext rolls back migrations to a specific version with context.
 func DownToContext(ctx context.Context, db *DB, directory string, targetVersion int64) error {
-	currentDBVersion, _, err := EnsureDBVersionContext(ctx, db)
+	logger.Printf("starting migration down process...")
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if err := lockDB(ctx, db); err != nil {
+		return err
+	}
+
+	knownMigrations, foundMigrations, err := prepareKnownAndCollectProvidedMigrations(ctx, db, directory, targetVersion)
+	if err != nil {
+		return err
+	}
+	appliedMigrations := lookupAppliedMigrations(knownMigrations, foundMigrations)
+
+	for _, applied := range appliedMigrations {
+		if err = applied.DownContext(ctx, db); err != nil {
+			return err
+		}
+	}
+
+	currentDBVersion, err := EnsureDBVersionContext(ctx, db)
 	if err != nil {
 		return err
 	}
 
-	if currentDBVersion < targetVersion {
-		return internal.ErrDBAlreadyIsUpToDate(currentDBVersion)
+	if err := db.dialect.Unlock(ctx); err != nil {
+		return err
 	}
 
-	return db.dialect.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		migrations, err := lookupMigrations(directory, maxVersion)
-		if err != nil {
-			return err
-		}
-
-		migrationsMap := make(map[int64]*internal.Migration)
-		for _, m := range migrations {
-			migrationsMap[m.Version] = m
-		}
-
-		for {
-			currentDBVersion, _, err = EnsureDBVersionContext(ctx, db)
-			if err != nil {
-				return err
-			}
-
-			if currentDBVersion == 0 {
-				logger.Println(internal.GetSuccessMigrationMessage(currentDBVersion))
-				return nil
-			}
-
-			currentMigration, ok := migrationsMap[currentDBVersion]
-			if !ok {
-				logger.Println(internal.GetSuccessMigrationMessage(currentDBVersion))
-				return nil
-			}
-
-			if currentMigration.Version <= targetVersion {
-				logger.Println(internal.GetSuccessMigrationMessage(currentDBVersion))
-				return nil
-			}
-
-			if err = currentMigration.DownContext(ctx, tx, db.dialect); err != nil {
-				return err
-			}
-		}
-	})
+	logger.Println(internal.GetSuccessMigrationMessage(currentDBVersion))
+	return nil
 }

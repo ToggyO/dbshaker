@@ -1,17 +1,16 @@
 package migrations
 
 import (
-	"database/sql"
-
 	"github.com/ToggyO/dbshaker/pkg"
+	"github.com/ToggyO/dbshaker/shared"
 )
 
 func init() {
-	dbshaker.AddMigration(Up31102022003, Down31102022003)
+	dbshaker.RegisterGOMigration(Up31102022003, Down31102022003, true)
 }
 
-func Up31102022003(tx *sql.Tx) error {
-	_, err := tx.Exec(
+func Up31102022003(runner shared.IQueryRunner) error {
+	_, err := runner.Exec(
 		`CREATE TABLE products(
 		id SERIAL PRIMARY KEY,
 		name VARCHAR NOT NULL,
@@ -23,8 +22,8 @@ func Up31102022003(tx *sql.Tx) error {
 	return nil
 }
 
-func Down31102022003(tx *sql.Tx) error {
-	_, err := tx.Exec("DROP TABLE products;")
+func Down31102022003(runner shared.IQueryRunner) error {
+	_, err := runner.Exec("DROP TABLE products;")
 	if err != nil {
 		return err
 	}

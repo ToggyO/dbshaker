@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"github.com/ToggyO/dbshaker/internal"
 	"github.com/ToggyO/dbshaker/pkg"
 	"github.com/ToggyO/dbshaker/tests/suites"
 	_ "github.com/lib/pq" //lint:ignore revive
@@ -9,10 +10,13 @@ import (
 
 type PgTestSuite struct {
 	suites.ServiceFixtureSuite
+
+	connectionString string
 }
 
 func (s *PgTestSuite) SetupSuite() {
-	s.Init("postgres", CreatePgConnectionString(suites.NewDBConf("postgres/.env")))
+	s.connectionString = CreatePgConnectionString(suites.NewDBConf("postgres/.env"))
+	s.Init(internal.PostgresDialect, s.connectionString)
 }
 
 func (s *PgTestSuite) TestMigrationDownTo() {
